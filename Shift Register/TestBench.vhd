@@ -22,7 +22,7 @@ architecture Test of Test_SHIFT_REG is
         -- Test Inputs
         D_IN : in std_logic;
         CLK  : in std_logic;
-        RST : in std_logic := '0;
+        RST : in std_logic
     );
     end component;
 
@@ -33,7 +33,7 @@ architecture Test of Test_SHIFT_REG is
 
     begin
         dev_to_test: SHIFT_REG
-            port map(A, B, C, D, D_IN, CLK, RST); -- Instatiate our SHIFT_REG with a port map
+            port map(A, B, C, D, D_IN, CLK, RST); -- Instantiate our SHIFT_REG with a port map
 
         -- This process flips the clock at 100 MHz
         clk_stim: process

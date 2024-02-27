@@ -21,7 +21,7 @@ entity SHIFT_REG is
         -- Inputs
         D_IN : in std_logic; -- SW0
         CLK  : in std_logic; -- CLK
-        RST  : in std_logic := '0' -- SW1
+        RST  : in std_logic -- SW1
 
     );
 
