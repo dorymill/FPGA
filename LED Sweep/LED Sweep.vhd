@@ -49,7 +49,7 @@ architecture Behavior of LED_SWEEP is
         begin
 
             -- Drive exterior control flow with direct action signals
-            -- and interior with inderect action signals
+            -- and interior with indirect action signals
             if(rising_edge(CLK)) then
                 if(ENABLE = '1') then
                     -- Check to see if we've hit
