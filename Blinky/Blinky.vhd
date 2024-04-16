@@ -23,8 +23,9 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
- 
+------------------------------------------------
 entity Blinky is
+------------------------------------------------
 	
   port (
 		-- inputs
@@ -36,11 +37,12 @@ entity Blinky is
 	);
 end Blinky;
 
-
+------------------------------------------------
 architecture Behavioral of Blinky is
+------------------------------------------------
 
 begin 
 
-  LED <= BTN when Enable = '1' else (others => '0');
+  LED <= BTN when Enable = '1' else (others => '0'); 
 
 end Behavioral;

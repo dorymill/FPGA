@@ -1,13 +1,19 @@
+------------------------------------------------
 -- Implementation of a 4 bit shift register
 
+-- Author: dmmill
+
+------------------------------------------------
 -- Libraries
 library IEEE;
 
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.numeric_std.all;
 
--- Entity declaration
-entity SHIFT_REG is
+
+------------------------------------------------
+entity SHIFT_REG is     -- Entity declaration
+------------------------------------------------
     -- These are physical and would need to match
     -- I/O ports in the xdc file for this board. 
     -- Since these are generic names.
@@ -27,8 +33,10 @@ entity SHIFT_REG is
 
 end SHIFT_REG;
 
--- Architecture
-architecture Behavior of SHIFT_REG is
+
+------------------------------------------------
+architecture Behavior of SHIFT_REG is   -- Arch.  
+------------------------------------------------
 
     -- These are non-physical
     signal A_reg, B_reg : std_logic := '0';
@@ -45,8 +53,10 @@ architecture Behavior of SHIFT_REG is
         C <= C_reg;
         D <= D_reg;
 
-        -- Process (this actually does the work)
-        REG_PROCESS: process(CLK)
+        
+        ------------------------------------------------
+        REG_PROCESS: process(CLK)  -- This does work!
+        ------------------------------------------------
         begin
 
             if(rising_edge(CLK)) then
