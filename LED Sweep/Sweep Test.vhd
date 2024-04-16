@@ -9,7 +9,7 @@ end;
 
 ------------------------------------------------
 architecture Test of Test_LED_Sweep is
-    ------------------------------------------------
+------------------------------------------------
 
     -- Instantiate component of LED_SWEEP
     component LED_SWEEP
