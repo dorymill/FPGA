@@ -7,7 +7,9 @@ use IEEE.numeric_std.all;
 entity Test_LED_Sweep is 
 end;
 
+------------------------------------------------
 architecture Test of Test_LED_Sweep is
+    ------------------------------------------------
 
     -- Instantiate component of LED_SWEEP
     component LED_SWEEP
@@ -33,24 +35,30 @@ architecture Test of Test_LED_Sweep is
     signal ENABLE : std_logic := '1';
     signal CLK    : std_logic := '1';
 
-    -- Create the stimuli routines
+    
     begin
-        test_routine: LED_SWEEP
+        ------------------------------------------------
+        test_routine: LED_SWEEP -- Create the stimuli routines
+        ------------------------------------------------
             generic map(cycleTime => 50)
             port map(LED, ENABLE, CLK);
-
-        -- Drive the enable line high
-        enable_stim: process
+      
+        ------------------------------------------------
+        ENABLE_STIM: process -- Drive the enable line high
+        ------------------------------------------------
         begin
             ENABLE <= '1';
-            wait;
-        end process enable_stim;
+            wait for 10 us;
+            ENABLE <= '0';
+            wait for 23 us;
+        end process ENABLE_STIM;
 
-        -- This process flips the clock at 100 MHz
-        clk_stim: process
+        ------------------------------------------------
+        CLK_STIM: process -- This process flips the clock at 100 MHz
+        ------------------------------------------------
         begin   
             wait for 10 ns;
             CLK <= not CLK;
-        end process clk_stim;
+        end process CLK_STIM;
 
     end Test;

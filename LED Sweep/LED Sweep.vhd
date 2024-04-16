@@ -6,8 +6,9 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.numeric_std.all;
 
--- Entity declaration
+------------------------------------------------
 entity LED_SWEEP is
+------------------------------------------------
 
     generic (
 
@@ -26,10 +27,11 @@ entity LED_SWEEP is
 
     );
 
-end LED_SWEEP;
+end entity LED_SWEEP;
 
--- Architecture
+------------------------------------------------
 architecture Behavior of LED_SWEEP is
+------------------------------------------------
 
     -- Signals for the routine
     signal clkCounter : integer range 0 to cycleTime := 0;
@@ -37,24 +39,39 @@ architecture Behavior of LED_SWEEP is
     signal enableSw   : std_logic;
 
     begin
-        LED    <= ledArray;
 
-        SWEEP: process(CLK)
+        LED    <= ledArray;  -- Initialize the physical LED array
+
+        ------------------------------------------------
+        SWEEP_PROCESS: process(CLK) is
+        ------------------------------------------------
+
         begin
-            if(ENABLE /= '1') then
-                clkCounter <= cycleTime;
-                ledArray <= "0000000000000001";
-            elsif (rising_edge(CLK)) then
-                -- Check to see if we've hit
-                -- our timer
-                if (clkCounter = 0) then
-                    clkCounter <= cycleTime;
-                    -- Shift the LED light in a circular fashion
-                    ledArray <= ledArray(maxLEDS - 2 downto 0) & ledArray(maxLEDS - 1);
+
+            -- Drive exterior control flow with direct action signals
+            -- and interior with inderect action signals
+            if(rising_edge(CLK)) then
+                if(ENABLE = '1') then
+                    -- Check to see if we've hit
+                    -- our timer
+                    if(clkCounter = 0) then                         -- Check to see if we need to shift
+                        clkCounter <= cycleTime;                    -- Shift LED in a
+                        ledArray <= ledArray(maxLEDS - 2 downto 0)  -- circular fashion
+                                  & ledArray(maxLEDS - 1);
+                    else
+                        clkCounter <= clkCounter - 1;               -- Decrement counter
+                    end if;
                 else
-                    clkCounter <= clkCounter - 1;
+                    -- We could initialize the
+                    -- array back to the initial
+                    -- position, but leaving the
+                    -- LED where it lands is more
+                    -- fun!
+                    -- ledArray(0) <= '1';
+                    -- ledArray(15 downto 1) <= (others=>'0');
                 end if;
             end if;
-        end process SWEEP;
 
-    end Behavior;
+        end process SWEEP_PROCESS;
+
+    end architecture Behavior;
