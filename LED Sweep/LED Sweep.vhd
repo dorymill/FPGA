@@ -1,5 +1,9 @@
--- Code to sweep through the LEDs cause we love lights!
+------------------------------------------------
+-- Code to sweep through LED's!
 
+-- Author: dmmill
+
+------------------------------------------------
 -- Libraries
 library IEEE;
 
@@ -40,7 +44,7 @@ architecture Behavior of LED_SWEEP is
 
     begin
 
-        LED    <= ledArray;  -- Initialize the physical LED array
+        LED <= ledArray;  -- Initialize the physical LED array
 
         ------------------------------------------------
         SWEEP_PROCESS: process(CLK) is
