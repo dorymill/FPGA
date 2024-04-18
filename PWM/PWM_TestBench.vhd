@@ -28,14 +28,15 @@ architecture Test of PWM_GEN_TEST is
         clockFreq : integer := 1000000;
         maxLEDS   : integer := 15;
         bitDepth  : integer := 8;
-        pwmFreq   : integer := 100
+        pwmFreq   : integer := 100;
+        absoluteMax : integer := 65535
 
     );
 
     port ( -- Physical I/O
 
         LED    : out std_logic_vector(maxLEDS - 1 downto 0);
-        SW     : in std_logic_vector(bitDepth - 1 downto 1);
+        SW     : in std_logic_vector(bitDepth downto 1);
         
         CLK    : in std_logic;
         ENABLE : in std_logic
@@ -43,25 +44,28 @@ architecture Test of PWM_GEN_TEST is
     );
     end component;
 
-    constant CLKFREQ : integer := 10000;
-    constant LEDS    : integer := 15;
-    constant BDEPTH  : integer := 8;
-    constant PWMFRQ  : integer := 100;
+    constant absoluteMax : integer := 65535;
+    constant bitDepth    : integer := 8;
 
-    signal maxCounts : integer range 0 to CLKFREQ/PWMFRQ;    -- Clock cycles per PWM Period
-    signal pwmCount  : integer range 0 to maxCounts;            -- Current PWM clock cycle
-    signal dutySw    : std_logic_vector(BDEPTH - 1 downto 1); -- Duty switch vector
-    signal dutyCycle : integer range 0 to 2**BDEPTH - 1;      -- Duty Cycle [0,255]
-    signal tLowTrig  : integer range 0 to maxCounts;            -- Off time clock cycle
-    signal pwmSignal : std_logic_vector;
+    signal maxCounts : integer range 0 to absoluteMax;    -- Clock cycles per PWM Period
+    signal pwmCount  : integer range 0 to absoluteMax;            -- Current PWM clock cycle
+    signal dutySw    : std_logic_vector(bitDepth downto 1); -- Duty switch vector
+    signal dutyCycle : integer range 0 to 2**bitDepth - 1;      -- Duty Cycle [0,255]
+    signal tLowTrig  : integer range 0 to absoluteMax;            -- Off time clock cycle
+    signal pwmSignal : std_logic;
 
+    signal LED    : std_logic_vector(15 - 1 downto 0) := (others => '0');
+    signal ENABLE : std_logic := '1';
+    signal CLK    : std_logic := '1';
+    signal SW     : std_logic_vector(8 downto 1) := (others => '0');
 
+    
     begin
         ------------------------------------------------
         test_routine: PWM_GEN
         ------------------------------------------------
 
-            generic map(clockFreq => CLKFREQ, maxLEDS => LEDS, bitDepth => BDEPTH, pwmFreq => PWMFRQ)
+            generic map(clockFreq => 10000, maxLEDS => 15, bitDepth => 8, pwmFreq => 100, absoluteMax => 65535)
             port map(LED, SW, CLK, ENABLE);
 
         ------------------------------------------------
@@ -86,7 +90,7 @@ architecture Test of PWM_GEN_TEST is
         DUTY_STIM: process -- Drive the duty cycle switch to 25%
         ------------------------------------------------
         begin
-            dutySw <= std_logic_vector(to_unsigned(63, dutySw'length));
+            dutySw <= std_logic_vector(to_unsigned(127, dutySw'length));
             wait;
         end process DUTY_STIM;
 
