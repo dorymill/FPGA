@@ -34,7 +34,7 @@ entity LED_SWEEP is
 end entity LED_SWEEP;
 
 ------------------------------------------------
-architecture Behavior of LED_SWEEP is
+architecture RTL of LED_SWEEP is
 ------------------------------------------------
 
     -- Signals for the routine
@@ -78,4 +78,4 @@ architecture Behavior of LED_SWEEP is
 
         end process SWEEP_PROCESS;
 
-    end architecture Behavior;
+    end architecture RTL;
