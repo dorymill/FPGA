@@ -49,10 +49,6 @@ architecture RTL of PWM_GEN is
 
     begin
 
-        maxCounts <= clockFreq / pwmFreq;
-        dutyCycle <= To_integer(unsigned(dutySw));
-        tLowTrig  <= (1 - dutyCycle/(2**bitDepth - 1))*maxCounts;
-
         LED       <= (others => pwmSignal);
 
         ------------------------------------------------
@@ -60,9 +56,16 @@ architecture RTL of PWM_GEN is
         ------------------------------------------------
 
         begin
+
+            -- Handle duty cycle calculations in delta cycles
+            maxCounts <= clockFreq / pwmFreq;
+            dutyCycle <= To_integer(unsigned(dutySw));
+            tLowTrig  <= (1 - dutyCycle/(2**bitDepth - 1))*maxCounts;
+
             if (ENABLE = '0') then
                 -- Handle enable line
                 pwmSignal <= '0';
+                pwmCount <= 0;
 
             elsif (rising_edge(CLK)) then
                 -- Handle PWM Signal
