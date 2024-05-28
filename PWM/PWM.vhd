@@ -1,6 +1,7 @@
 ------------------------------------------------
 -- Code to output a PWM signal to the LED's!
 
+-- Quadspi: S25FL032
 -- Author: dmmill
 
 ------------------------------------------------
@@ -16,21 +17,21 @@ entity PWM_GEN is
 
     generic ( -- Constants
 
-        clockFreq : integer   := 10000000;
-        maxLEDS   : integer   := 15;
-        bitDepth  : integer   := 8;
-        pwmFreq   : integer   := 100;
-        absoluteMax : integer := 65535
+        clockFreq   : integer   := 10000000;   -- Input clock frequency
+        maxLEDS     : integer   := 15;         -- Number of LED's
+        bitDepth    : integer   := 8;          -- Resolution for Duty Cycle
+        pwmFreq     : integer   := 1000        -- PWM Frequency Output
+
 
     );
 
     port ( -- Physical I/O
 
-        LED    : out std_logic_vector(maxLEDS - 1 downto 0);
-        SW     : in std_logic_vector(bitDepth downto 1);
+        LED    : out std_logic_vector(maxLEDS - 1 downto 0);   -- Output LED's
 
-        CLK    : in std_logic;
-        ENABLE : in std_logic
+        SW     : in std_logic_vector(bitDepth downto 1);       -- Duty Cycle Switches
+        CLK    : in std_logic;                                 -- Input Clock (10 MHz)
+        ENABLE : in std_logic                                  -- Enable Switch
     
     );
 
@@ -40,49 +41,58 @@ end entity PWM_GEN;
 architecture RTL of PWM_GEN is
 ------------------------------------------------
 
-    signal maxCounts : integer range 0 to absoluteMax;    -- Clock cycles per PWM Period
-    signal pwmCount  : integer range 0 to absoluteMax;            -- Current PWM clock cycle
-    signal dutySw    : std_logic_vector(bitDepth downto 1); -- Duty switch vector
-    signal dutyCycle : integer range 0 to 2**bitDepth - 1;      -- Duty Cycle [0,255]
-    signal tLowTrig  : integer range 0 to absoluteMax;            -- Off time clock cycle
-    signal pwmSignal : std_logic;
+    -- Constants
+    constant maxCounts : integer := clockFreq / pwmFreq;        -- Clock cycles per PWM period
+    constant pwmStep   : integer := maxCounts / (2**bitDepth);  -- Clock cycles per duty step (SW step)
+
+    -- Signals
+    signal pwmSignal : std_logic                        := '0';       -- Output PWM Signal to LED's
+    signal counter   : integer range 0 to maxCounts     := maxCounts; -- Cycle counter
+    signal tLowTrig  : integer range 0 to maxCounts     := 0;         -- Sample number at which we drive low
+    signal dutySw    : integer range 0 to (2**bitDepth) := 0;         -- Integer value of the duty switch
 
     begin
 
+        -- Assign the state of the LED to the PWM signal, and dutySw to the switch value
+        dutySw    <= to_integer(unsigned(SW));
         LED       <= (others => pwmSignal);
 
         ------------------------------------------------
-        PWM_PROCESS: process(CLK, ENABLE) is
+        PWM_PROCESS: process(CLK) is
         ------------------------------------------------
 
         begin
 
-            -- Handle duty cycle calculations in delta cycles
-            maxCounts <= clockFreq / pwmFreq;
-            dutyCycle <= To_integer(unsigned(dutySw));
-            tLowTrig  <= (1 - dutyCycle/(2**bitDepth - 1))*maxCounts;
+            -- Check for rising edge
+            if(rising_edge(CLK)) then
+                -- Check Enable Line
+                if (ENABLE = '1') then
+                    -- PWM Logic
+                    -- Condition to drive high and recalculate tLowTrig
+                    if (counter = 0) then
+                        tLowTrig  <= maxCounts - (dutySw * pwmStep); 
+                        pwmSignal <= '1';
+                        counter   <= maxCounts;
 
-            if (ENABLE = '0') then
-                -- Handle enable line
-                pwmSignal <= '0';
-                pwmCount <= 0;
+                    -- The condition to drive low
+                    elsif (counter = tLowTrig) then     
+                        pwmSignal <= '0';
+                        counter   <= counter - 1;
+                   
+                    -- Otherwise decrement the counter
+                    else                         
+                        counter <= counter - 1;
 
-            elsif (rising_edge(CLK)) then
-                -- Handle PWM Signal
-                if(pwmCount = tLowTrig) then
-                    pwmSignal <= '0';
-                elsif(pwmCount = maxCounts) then
-                    pwmSignal <= '1';
-                end if;
+                    end if;
 
-                -- Handle PWM Counter
-                if(pwmCount = 0) then
-                    pwmCount <= maxCounts;
+                -- If not enabled, zero the signal and max the counter
                 else
-                    pwmCount <= pwmCount - 1;
+                    pwmSignal <= '0';
+                    counter   <= maxCounts;
+                    
                 end if;
             end if;
-
+            
         end process PWM_PROCESS;
 
     end architecture RTL;
