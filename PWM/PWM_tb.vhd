@@ -102,7 +102,7 @@ architecture PWM_GEN of TestBench is
         process begin
 
             -- Signal Initialization
-            SW        <= "00001000";
+            SW        <= "10000000";
 
             -- Vibe for a million cycles
             wait for 1000000 * TCLK;
