@@ -57,11 +57,6 @@ architecture PWM_GEN of TestBench is
     signal CLK    : std_logic;                                  -- Input Clock (10 MHz)
     signal ENABLE : std_logic;                                  -- Enable Switch
 
-    --    signal pwmSignal : std_logic                        := '0';        -- Output PWM Signal to LED's
-    --    signal counter   : integer range 0 to maxCounts     := maxCounts;  -- Cycle counter
-    --    signal tLowTrig  : integer range 0 to maxCounts     := 0;          -- Sample number at which we drive low
-    --    signal dutySw    : integer range 0 to (2**bitDepth) := 0;          -- Integer value of the duty switch
-
     constant TCLK : time    := 10 ns;
     signal   DONE : boolean := FALSE;
 
