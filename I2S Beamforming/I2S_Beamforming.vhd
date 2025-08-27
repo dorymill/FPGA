@@ -84,12 +84,12 @@ architecture RTL of ENDFIRE is
         PHONE4  <= p24bit; -- case, reducing overall internal signals.
 
         ------------------------------------------------
-        LRCLK_PROC: process(MCLK)  -- Frame Sync Clock
+        LRCLK_PROC: process(lrClock)  -- Frame Sync Clock
         ------------------------------------------------
         begin
             if(ENABLE = '1') then
                 -- Transition at clock rise
-                if(rising_edge(MCLK)) then
+                if(rising_edge(lrClock)) then
                     if (lrClkCntr = lrClkCntMax) then
                         lrClock <= not lrClock;
                         lrClkCntr <= 0;
@@ -103,12 +103,12 @@ architecture RTL of ENDFIRE is
         end process LRCLK_PROC;
 
         ------------------------------------------------
-        BITSYNC_PROC: process(lrClock)  -- Bit Sync Clock
+        BITSYNC_PROC: process(MCLK)  -- Bit Sync Clock
         ------------------------------------------------
         begin
             if(ENABLE = '1') then
                 -- Transition LRCLK Rise
-                if(rising_edge(lrClock)) then
+                if(rising_edge(MCLK)) then
                     if (bitClkCntr = bitClkCntMax) then
                         bitClock <= not bitClock;
                         bitClkCntr <= 0;
