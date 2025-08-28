@@ -21,7 +21,7 @@ entity ENDFIRE is
 
     generic ( -- Constants 
 
-        mClkFreq  : integer := 10000000;  -- Master Clock Frequency
+        mClkFreq  : integer := 49152000;  -- Master Clock Frequency
         lrClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
         bitWidth  : integer := 16;        -- Audio Data Size
         nChan     : integer := 2;         -- Number of Channels
@@ -51,10 +51,10 @@ architecture RTL of ENDFIRE is
 ------------------------------------------------
 
     -- Constants
-    constant lrClkCntMax  : integer := mClkFreq / lrClkFreq;     -- Clock cycles per frame sync cycle (mClk/f_s)
-    constant bitClkCntMax : integer := lrClkFreq*nChan*bitWidth; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
-    constant bitCntMax    : integer := bitWidth;                 -- Data width
-    constant endfireDelay : integer := 0;                        -- Phone 2 & 4 Endfire delay (TBD)
+    constant lrClkCntMax  : integer := mClkFreq / lrClkFreq;                  -- Clock cycles per frame sync cycle (mClk/f_s)
+    constant bitClkCntMax : integer := mclkFreq / (lrClkFreq*nChan*bitWidth); -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
+    constant bitCntMax    : integer := bitWidth;                              -- Data width
+    constant endfireDelay : integer := 0;                                     -- Phone 2 & 4 Endfire delay (TBD)
     
     -- Signals
 
@@ -103,12 +103,12 @@ architecture RTL of ENDFIRE is
         end process LRCLK_PROC;
 
         ------------------------------------------------
-        BITSYNC_PROC: process(lrClock)  -- Bit Sync Clock
+        BITSYNC_PROC: process(MCLK)  -- Bit Sync Clock
         ------------------------------------------------
         begin
             if(ENABLE = '1') then
                 -- Transition LRCLK Rise
-                if(rising_edge(lrClock)) then
+                if(rising_edge(MCLK)) then
                     if (bitClkCntr = bitClkCntMax) then
                         bitClock <= not bitClock;
                         bitClkCntr <= 0;
@@ -122,7 +122,7 @@ architecture RTL of ENDFIRE is
         end process BITSYNC_PROC;
 
         ------------------------------------------------
-        DATA_PROC: process(lrClock, bitClock)  -- Data Processing
+        DATA_PROC: process(MCLK)  -- Data Processing
         ------------------------------------------------
         begin
             if (ENABLE = '1') then
