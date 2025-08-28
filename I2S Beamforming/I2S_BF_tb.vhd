@@ -80,9 +80,9 @@ architecture SIM of ENDFIRE_TB is
     signal PHONE1 : std_logic; -- Phone 1 bit
     signal PHONE2 : std_logic; -- Phone 2 bit
     signal PHONE3 : std_logic; -- Phone 3 bit
-    signal PHONE4  : std_logic; -- Phone 4 bit
+    signal PHONE4 : std_logic; -- Phone 4 bit
 
-    constant TCLK : time    := 20345.052 ps;
+    constant TCLK : time    := 20.345052 ns;
     signal   DONE : boolean := FALSE;
 
     begin
