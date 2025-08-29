@@ -6,7 +6,7 @@
 # Clock signal
 set_property PACKAGE_PIN W5 [get_ports MCLK]							
 	set_property IOSTANDARD LVCMOS33 [get_ports MCLK]
-	create_clock -add -name sys_clk_pin -period 20.345052 -waveform {0 5} [get_ports MCLK]
+	create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports MCLK]
  
 # Switches
 set_property PACKAGE_PIN V17 [get_ports {ENABLE}]					

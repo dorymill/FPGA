@@ -21,7 +21,7 @@ entity ENDFIRE is
 
     generic ( -- Constants 
 
-        mClkFreq  : integer := 49152000;  -- Master Clock Frequency
+        mClkFreq  : integer := 30720000;  -- Master Clock Frequency
         lrClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
         bitWidth  : integer := 16;        -- Audio Data Size
         nChan     : integer := 2;         -- Number of Channels
@@ -50,9 +50,25 @@ end entity ENDFIRE;
 architecture RTL of ENDFIRE is
 ------------------------------------------------
 
+    -- Components
+
+        -- PLL Component
+    component clk_wiz_0
+        port
+        (-- Clock in ports
+        clk_in1           : in     std_logic;
+        -- Clock out ports
+        clk_out1          : out    std_logic;
+        -- Status and control signals
+        reset             : in     std_logic;
+        locked            : out    std_logic
+        );
+
+    end component;
+
     -- Constants
-    constant lrClkCntMax  : integer := mClkFreq / lrClkFreq;                  -- Clock cycles per frame sync cycle (mClk/f_s)
-    constant bitClkCntMax : integer := mclkFreq / (lrClkFreq*nChan*bitWidth); -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
+    constant lrClkCntMax  : integer := (mClkFreq / lrClkFreq) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
+    constant bitClkCntMax : integer := (mclkFreq / (lrClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
     constant bitCntMax    : integer := bitWidth;                              -- Data width
     constant endfireDelay : integer := 0;                                     -- Phone 2 & 4 Endfire delay (TBD)
     
@@ -69,8 +85,19 @@ architecture RTL of ENDFIRE is
     signal bitClock  : std_logic := '0'; -- Bit Sync Clock output
     signal p13bit    : std_logic := '0'; -- Phone 1 I2S output bit
     signal p24bit    : std_logic := '0'; -- Phone 2 I2S output bit
+    signal I2SCLK    : std_logic := '0'; -- I2S Component output
+    signal locked    : std_logic := '0'; -- PLL lock status
+    signal resetn    : std_logic := '1'; -- PLL reset (active low)
 
     begin -- Concurrent Statements & Component Instantiation
+
+        -- Component Init
+    PLL_inst : clk_wiz_0
+        port map ( 
+            clk_in1 => MCLK,
+            clk_out1 => I2SCLK,
+            reset => '0'                       
+        );
 
         -- Physical Connections to variables
             -- Internal
@@ -84,12 +111,12 @@ architecture RTL of ENDFIRE is
         PHONE4  <= p24bit; -- case, reducing overall internal signals.
 
         ------------------------------------------------
-        LRCLK_PROC: process(MCLK)  -- Frame Sync Clock
+        LRCLK_PROC: process(I2SCLK)  -- Frame Sync Clock
         ------------------------------------------------
         begin
             if(ENABLE = '1') then
                 -- Transition at clock rise
-                if(rising_edge(MCLK)) then
+                if(rising_edge(I2SCLK)) then
                     if (lrClkCntr = lrClkCntMax) then
                         lrClock <= not lrClock;
                         lrClkCntr <= 0;
@@ -103,12 +130,12 @@ architecture RTL of ENDFIRE is
         end process LRCLK_PROC;
 
         ------------------------------------------------
-        BITSYNC_PROC: process(MCLK)  -- Bit Sync Clock
+        BITSYNC_PROC: process(I2SCLK)  -- Bit Sync Clock
         ------------------------------------------------
         begin
             if(ENABLE = '1') then
                 -- Transition LRCLK Rise
-                if(rising_edge(MCLK)) then
+                if(rising_edge(I2SCLK)) then
                     if (bitClkCntr = bitClkCntMax) then
                         bitClock <= not bitClock;
                         bitClkCntr <= 0;
@@ -122,7 +149,7 @@ architecture RTL of ENDFIRE is
         end process BITSYNC_PROC;
 
         ------------------------------------------------
-        DATA_PROC: process(MCLK)  -- Data Processing
+        DATA_PROC: process(I2SCLK)  -- Data Processing
         ------------------------------------------------
         begin
             if (ENABLE = '1') then

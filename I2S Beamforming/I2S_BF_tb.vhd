@@ -21,7 +21,7 @@ architecture SIM of ENDFIRE_TB is
     component ENDFIRE
     generic ( -- Constants 
 
-        mClkFreq  : integer := 49152000;  -- Master Clock Frequency
+        mClkFreq  : integer := 30720000;  -- Master Clock Frequency
         lrClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
         bitWidth  : integer := 16;        -- Audio Data Size
         nChan     : integer := 2;         -- Number of Channels
@@ -46,14 +46,14 @@ architecture SIM of ENDFIRE_TB is
     end component;
 
     -- UUT Constant and Signal Declaration
-    constant mClkFreq  : integer := 49152000;  -- Master Clock Frequency
+    constant mClkFreq  : integer := 30720000;  -- Master Clock Frequency
     constant lrClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
     constant bitWidth  : integer := 16;        -- Audio Data Size
     constant nChan     : integer := 2;         -- Number of Channels
     constant tableSize : integer := 4096;       -- Sine Table Depth
 
-    constant lrClkCntMax  : integer := mClkFreq / lrClkFreq;                  -- Clock cycles per frame sync cycle (mClk/f_s)
-    constant bitClkCntMax : integer := mclkFreq / (lrClkFreq*nChan*bitWidth); -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
+    constant lrClkCntMax  : integer := (mClkFreq / lrClkFreq) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
+    constant bitClkCntMax : integer := (mclkFreq / (lrClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
     constant bitCntMax    : integer := bitWidth;                              -- Data width
     constant endfireDelay : integer := 0;                                     -- Phone 2 & 4 Endfire delay (TBD)
     
@@ -65,7 +65,9 @@ architecture SIM of ENDFIRE_TB is
     signal bitCntr    : integer range 0 to bitWidth - 1; -- Clocked bits counter
     signal bitDelay   : integer range 0 to 1;            -- I2S Standard bit delay
 
-        -- Outputs
+    -- Outputs
+    signal locked    : std_logic := '1'; -- PLL lock status
+    signal resetn    : std_logic := '1'; -- PLL reset (active low)
     signal lrClock   : std_logic := '0'; -- Frame Sync Clock output
     signal bitClock  : std_logic := '0'; -- Bit Sync Clock output
     signal p13bit    : std_logic := '0'; -- Phone 1 I2S output bit
@@ -75,6 +77,7 @@ architecture SIM of ENDFIRE_TB is
     signal ENABLE : std_logic; -- Reset
     signal MCLK   : std_logic; -- Master Clock
             
+    signal I2SCLK : std_logic; -- I2S Bit Clock
     signal LRCLK  : std_logic; -- Frame Sync Clock
     signal BCLK   : std_logic; -- Bit Sync Clock
     signal PHONE1 : std_logic; -- Phone 1 bit
@@ -82,8 +85,11 @@ architecture SIM of ENDFIRE_TB is
     signal PHONE3 : std_logic; -- Phone 3 bit
     signal PHONE4 : std_logic; -- Phone 4 bit
 
-    constant TCLK : time    := 20.345052 ns;
-    signal   DONE : boolean := FALSE;
+    constant CFR   : real    := 30.72e6;     -- Crystal Frequency
+    constant TCLK  : time    := 1 sec / CFR; --I2S CLK Frequency
+    constant TMCLK : time    := 10 ns;       -- MCLK Period
+
+    signal   DONE  : boolean := FALSE;
 
     begin
 
@@ -94,7 +100,7 @@ architecture SIM of ENDFIRE_TB is
         generic map(
 
             -- Constants
-            mClkFreq  => 49152000,  -- Master Clock Frequency
+            mClkFreq  => 30720000,  -- Master Clock Frequency
             lrClkFreq => 96000,     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
             bitWidth  => 16,        -- Audio Data Size
             nChan     => 2,         -- Number of Channels
@@ -135,6 +141,14 @@ architecture SIM of ENDFIRE_TB is
         -- Input Data Driver
         ------------------------------------------------
         process begin
+            ENABLE <= '0', '1' after TCLK;
+            I2SCLK   <= '0';
+            wait for 2 * TCLK;
+            while not DONE loop
+                I2SCLK <= '1', '0' after TCLK / 2;
+                wait for TCLK;
+            end loop;
+            report "Simulation complete." severity note;
             wait;
         end process;
 
