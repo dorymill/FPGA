@@ -54,8 +54,8 @@ architecture SIM of ENDFIRE_TB is
 
     constant lrClkCntMax  : integer := (mClkFreq / lrClkFreq) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
     constant bitClkCntMax : integer := (mclkFreq / (lrClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
-    constant bitCntMax    : integer := bitWidth;                              -- Data width
-    constant endfireDelay : integer := 0;                                     -- Phone 2 & 4 Endfire delay (TBD)
+    constant bitCntMax    : integer := bitWidth - 1;                                    -- Data width
+    constant endfireDelay : integer := 0;                                           -- Phone 2 & 4 Endfire delay (TBD)
     
     -- Signals
 
@@ -84,6 +84,7 @@ architecture SIM of ENDFIRE_TB is
     signal PHONE2 : std_logic; -- Phone 2 bit
     signal PHONE3 : std_logic; -- Phone 3 bit
     signal PHONE4 : std_logic; -- Phone 4 bit
+    
 
     constant CFR   : real    := 30.72e6;     -- Crystal Frequency
     constant TCLK  : time    := 1 sec / CFR; --I2S CLK Frequency
@@ -128,6 +129,7 @@ architecture SIM of ENDFIRE_TB is
         process begin
             ENABLE <= '0', '1' after TCLK;
             MCLK   <= '0';
+            MODE   <= '0';
             wait for 2 * TCLK;
             while not DONE loop
                 MCLK <= '1', '0' after TCLK / 2;
@@ -140,6 +142,8 @@ architecture SIM of ENDFIRE_TB is
         ------------------------------------------------
         -- Input Data Driver
         ------------------------------------------------
+
+        -- Drive the I2S Maaster Clock (30.72 MHz)
         process begin
             ENABLE <= '0', '1' after TCLK;
             I2SCLK   <= '0';
@@ -148,7 +152,6 @@ architecture SIM of ENDFIRE_TB is
                 I2SCLK <= '1', '0' after TCLK / 2;
                 wait for TCLK;
             end loop;
-            report "Simulation complete." severity note;
             wait;
         end process;
 

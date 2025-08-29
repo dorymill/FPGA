@@ -69,8 +69,8 @@ architecture RTL of ENDFIRE is
     -- Constants
     constant lrClkCntMax  : integer := (mClkFreq / lrClkFreq) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
     constant bitClkCntMax : integer := (mclkFreq / (lrClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
-    constant bitCntMax    : integer := bitWidth;                              -- Data width
-    constant endfireDelay : integer := 0;                                     -- Phone 2 & 4 Endfire delay (TBD)
+    constant bitCntMax    : integer := bitWidth - 1;                                -- Data width
+    constant endfireDelay : integer := 0;                                           -- Phone 2 & 4 Endfire delay (TBD)
     
     -- Signals
 
@@ -78,7 +78,6 @@ architecture RTL of ENDFIRE is
     signal lrClkCntr  : integer range 0 to lrClkCntMax;  -- Frame Sync Clock Cycle Counter
     signal bitClkCntr : integer range 0 to bitClkCntMax; -- Bit Sync CLock Cycle Counter
     signal bitCntr    : integer range 0 to bitWidth - 1; -- Clocked bits counter
-    signal bitDelay   : integer range 0 to 1;            -- I2S Standard bit delay
 
         -- Outputs
     signal lrClock   : std_logic := '0'; -- Frame Sync Clock output
@@ -88,6 +87,13 @@ architecture RTL of ENDFIRE is
     signal I2SCLK    : std_logic := '0'; -- I2S Component output
     signal locked    : std_logic := '0'; -- PLL lock status
     signal resetn    : std_logic := '1'; -- PLL reset (active low)
+
+        -- State Maintenance
+    signal firstBit  : boolean := TRUE;  -- First bit flag
+    signal firstWord : boolean := TRUE;  -- First word flag
+
+        -- Test Signals
+    signal fakeData  : std_logic_vector(bitWidth - 1 downto 0) := "1000000000000000"; -- Fake data word
 
     begin -- Concurrent Statements & Component Instantiation
 
@@ -149,14 +155,53 @@ architecture RTL of ENDFIRE is
         end process BITSYNC_PROC;
 
         ------------------------------------------------
-        DATA_PROC: process(I2SCLK)  -- Data Processing
+        DATA_PROC: process(bitClock)  -- Data Processing
         ------------------------------------------------
         begin
             if (ENABLE = '1') then
             -- Note that when syncing bits in the I2S standard,
             -- there is a 1 bit sync cycle delay after frame sync
             -- has toggled to the respective channel.
+                if (falling_edge(bitClock)) then
 
+                    -- Check bit counter
+                    if (bitCntr = bitCntMax) then
+                        bitCntr <= 0;
+                    else
+                        bitCntr <= bitCntr + 1;
+                    end if;
+
+                    -- In Phase Mode
+                    if (MODE = '0') then
+
+                        -- Check to see if this is the first bit
+                        if (firstBit = TRUE) then
+                            p13bit <= '0';
+                            p24bit <= '0';
+                            firstBit <= FALSE;
+                        end if;
+
+                        -- If not the first bit, proceed with data output
+                        if (firstBit = FALSE) then
+
+                            -- Alternate through the two channels
+                            if(firstWord = TRUE) then
+                                p13bit <= fakeData(bitWidth - 1 - bitCntr);
+                                p24bit <= fakeData(bitWidth - 1 - bitCntr);
+                                firstWord <= FALSE;
+                            else
+                                p13bit <= fakeData(bitWidth - 1 - bitCntr);
+                                p24bit <= fakeData(bitWidth - 1 - bitCntr);
+                                firstWord <= TRUE;
+                            end if;
+                        end if;
+
+                    -- Endfire Mode
+                    elsif (MODE = '1') then 
+
+                    end if;
+                    
+                end if;
 
             else
                 p13bit <= '0';
