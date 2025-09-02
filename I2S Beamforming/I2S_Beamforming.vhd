@@ -55,13 +55,11 @@ architecture RTL of ENDFIRE is
         -- PLL Component
     component clk_wiz_0
         port
-        (-- Clock in ports
-        clk_in1           : in     std_logic;
-        -- Clock out ports
-        clk_out1          : out    std_logic;
-        -- Status and control signals
-        reset             : in     std_logic;
-        locked            : out    std_logic
+        (
+            clk_in1  : in  std_logic; -- Clock in ports
+            clk_out1 : out std_logic; -- Clock out ports 
+            reset    : in  std_logic; -- Status and control signals
+            locked   : out std_logic  -- PLL lock status
         );
 
     end component;
@@ -86,24 +84,24 @@ architecture RTL of ENDFIRE is
     signal p24bit    : std_logic := '0'; -- Phone 2 I2S output bit
     signal I2SCLK    : std_logic := '0'; -- I2S Component output
     signal locked    : std_logic := '0'; -- PLL lock status
-    signal resetn    : std_logic := '1'; -- PLL reset (active low)
+    signal resetn    : std_logic := '0'; -- PLL reset (active high)
 
         -- State Maintenance
     signal firstBit  : boolean := TRUE;  -- First bit flag
     signal firstWord : boolean := TRUE;  -- First word flag
 
         -- Test Signals
-    signal fakeData  : std_logic_vector(bitWidth - 1 downto 0) := "1000000000000000"; -- Fake data word
+    signal fakeData  : std_logic_vector(bitWidth - 1 downto 0) := "1000000100000000"; -- Fake data word
 
     begin -- Concurrent Statements & Component Instantiation
 
         -- Component Init
-    PLL_inst : clk_wiz_0
-        port map ( 
-            clk_in1 => MCLK,
-            clk_out1 => I2SCLK,
-            reset => '0'                       
-        );
+        PLL_inst : clk_wiz_0
+            port map ( 
+                clk_in1 => MCLK,
+                clk_out1 => I2SCLK,
+                reset => resetn                      
+            );
 
         -- Physical Connections to variables
             -- Internal
