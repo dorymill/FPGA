@@ -61,10 +61,10 @@ architecture SIM of I2S_TB is
     signal mclkTb   : std_logic := '0'; -- Master Clock
     signal validTb  : std_logic := '1'; -- Data Valid Signal
             
-    signal ph1din : std_logic_vector (bitWdith - 1 downto 0) := "1000000000000010"; -- Phone 1 data input
-    signal ph2din : std_logic_vector (bitWdith - 1 downto 0) := "1000000000000010"; -- Phone 2 data input
-    signal ph3din : std_logic_vector (bitWdith - 1 downto 0) := "1000000000000010"; -- Phone 3 data input
-    signal ph4din : std_logic_vector (bitWdith - 1 downto 0) := "1000000000000010"; -- Phone 4 data input
+    signal ph1din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 1 data input
+    signal ph2din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 2 data input
+    signal ph3din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 3 data input
+    signal ph4din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 4 data input
 
     -- Outputs from UUT
     signal d1out : std_logic; -- Phone 1 bit output
