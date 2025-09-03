@@ -34,6 +34,11 @@ entity I2S is
         MCLK     : in std_logic; -- Master Clock
         VALID    : in std_logic; -- Data Valid Signal
 
+        DIN1     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
+        DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
+        DIN3     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
+        DIN4     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
+
         PHONE1   : out std_logic; -- Phone 1 bit output
         PHONE2   : out std_logic; -- Phone 2 bit output
         PHONE3   : out std_logic; -- Phone 3 bit output
@@ -90,6 +95,12 @@ architecture RTL of I2S is
         -- Data Validation
         READY    <= readySig;  -- Connect Data Ready
         validSig <= VALID;     -- Connect Data Valid
+
+        -- Data Inputs
+        ph1inSig <= DIN1;  -- Connect Phone 1 Data Input
+        ph2inSig <= DIN2;  -- Connect Phone 2 Data Input
+        ph3inSig <= DIN3;  -- Connect Phone 3 Data Input
+        ph4inSig <= DIN4;  -- Connect Phone 4 Data Input
 
         ------------------------------------------------
         LRCLK_PROC: process(MCLK)  -- Frame Sync Clock

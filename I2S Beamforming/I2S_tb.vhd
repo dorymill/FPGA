@@ -34,6 +34,11 @@ architecture SIM of I2S_TB is
             MCLK     : in std_logic; -- Master Clock
             VALID    : in std_logic; -- Data Valid Signal
 
+            DIN1     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
+            DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
+            DIN3     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
+            DIN4     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
+
             PHONE1   : out std_logic; -- Phone 1 bit output
             PHONE2   : out std_logic; -- Phone 2 bit output
             PHONE3   : out std_logic; -- Phone 3 bit output
@@ -70,10 +75,10 @@ architecture SIM of I2S_TB is
     MCLK   <= mclk;
     VALID  <= valid;
 
-    ph1inSig  <= ph1din;
-    ph2inSig  <= ph2din;
-    ph3inSig  <= ph3din;
-    ph4inSig  <= ph4din;
+    DIN1  <= ph1din;
+    DIN2  <= ph2din;
+    DIN3  <= ph3din;
+    DIN4  <= ph4din;
 
     ------------------------------------------------
     -- Unit Under Test
@@ -126,7 +131,7 @@ architecture SIM of I2S_TB is
         -- Drive the valid and data signals
         process begin
 
-            valid <= '1'
+            valid <= '1';
 
             wait;
         end process;
