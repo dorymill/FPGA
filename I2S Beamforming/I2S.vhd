@@ -179,17 +179,17 @@ architecture RTL of I2S is
 
                                 -- Alternate through the two channels
                                 if(firstWord = TRUE) then
-                                    PHONE1 <= ph1inSig(bitCntr);
-                                    PHONE2 <= ph2inSig(bitCntr);
-                                    PHONE3 <= ph3inSig(bitCntr);
-                                    PHONE4 <= ph4inSig(bitCntr);
+                                    PHONE1 <= ph1inSig(bitWidth - 1 - bitCntr);
+                                    PHONE2 <= ph2inSig(bitWidth - 1 - bitCntr);
+                                    PHONE3 <= ph3inSig(bitWidth - 1 - bitCntr);
+                                    PHONE4 <= ph4inSig(bitWidth - 1 - bitCntr);
 
                                     firstWord <= FALSE;
                                 else
-                                    PHONE1 <= ph1inSig(bitCntr);
-                                    PHONE2 <= ph2inSig(bitCntr);
-                                    PHONE3 <= ph3inSig(bitCntr);
-                                    PHONE4 <= ph4inSig(bitCntr);
+                                    PHONE1 <= ph1inSig(bitWidth - 1 - bitCntr);
+                                    PHONE2 <= ph2inSig(bitWidth - 1 - bitCntr);
+                                    PHONE3 <= ph3inSig(bitWidth - 1 - bitCntr);
+                                    PHONE4 <= ph4inSig(bitWidth - 1 - bitCntr);
 
                                     firstWord <= TRUE;
                                 end if;
