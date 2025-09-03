@@ -155,7 +155,7 @@ architecture RTL of I2S is
                         -- Drive ready low while clocking out data
                         readySig <= '0';
                         -- If we're on the falling edge of the bit clock, change the data
-                        if (bitClkCntr = 0 and bitClock = '1') then
+                        if (bitClkCntr = bitClkCntMax and bitClock = '1') then
 
                             -- Check bit counter
                             if (bitCntr = bitCntMax) then
@@ -197,8 +197,8 @@ architecture RTL of I2S is
                         end if;
 
                         -- Drive ready high after we've clocked out the last bit.
-                        if (bitCntr = bitCntMax and bitClkCntr = 0 and bitClock = '1') then
-                            ready <= '1';
+                        if (bitCntr = bitCntMax and bitClkCntr = bitClkCntMax and bitClock = '1') then
+                            readySig <= '1';
                         end if;
 
                     else

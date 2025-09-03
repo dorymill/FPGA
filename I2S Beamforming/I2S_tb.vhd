@@ -52,16 +52,28 @@ architecture SIM of I2S_TB is
 
     end component;
     
+    -- Constants
+    constant bitWdith : integer := 16;        -- Audio Data Size
+
     -- Signals
     -- Outputs to UUT
-    signal enable : std_logic := '1'; -- Reset
-    signal mclk   : std_logic := '0'; -- Master Clock
-    signal valid  : std_logic := '1'; -- Data Valid Signal
+    signal enableTb : std_logic := '1'; -- Reset
+    signal mclkTb   : std_logic := '0'; -- Master Clock
+    signal validTb  : std_logic := '1'; -- Data Valid Signal
             
-    signal ph1din : std_logic_vector (bitWdith - 1 downto 0) := "1000010000000000"; -- Phone 1 data input
-    signal ph2din : std_logic_vector (bitWdith - 1 downto 0) := "1000010000000000"; -- Phone 2 data input
-    signal ph3din : std_logic_vector (bitWdith - 1 downto 0) := "1000010000000000"; -- Phone 3 data input
-    signal ph4din : std_logic_vector (bitWdith - 1 downto 0) := "1000010000000000"; -- Phone 4 data input
+    signal ph1din : std_logic_vector (bitWdith - 1 downto 0) := "1000000000000010"; -- Phone 1 data input
+    signal ph2din : std_logic_vector (bitWdith - 1 downto 0) := "1000000000000010"; -- Phone 2 data input
+    signal ph3din : std_logic_vector (bitWdith - 1 downto 0) := "1000000000000010"; -- Phone 3 data input
+    signal ph4din : std_logic_vector (bitWdith - 1 downto 0) := "1000000000000010"; -- Phone 4 data input
+
+    -- Outputs from UUT
+    signal d1out : std_logic; -- Phone 1 bit output
+    signal d2out : std_logic; -- Phone 2 bit output
+    signal d3out : std_logic; -- Phone 3 bit output
+    signal d4out : std_logic; -- Phone 4 bit output
+    signal lrOut: std_logic; -- Frame Sync Clock
+    signal bOut : std_logic; -- Bit Sync Clock
+    signal rOut : std_logic; -- Data Ready Signal
 
     constant CFR   : real    := 30.72e6;     -- Crystal Frequency
     constant TCLK  : time    := 1 sec / CFR; --I2S CLK Frequency
@@ -70,42 +82,42 @@ architecture SIM of I2S_TB is
 
     begin
 
-    -- Wire the test bench to the UUT
-    ENABLE <= enable;
-    MCLK   <= mclk;
-    VALID  <= valid;
-
-    DIN1  <= ph1din;
-    DIN2  <= ph2din;
-    DIN3  <= ph3din;
-    DIN4  <= ph4din;
-
     ------------------------------------------------
     -- Unit Under Test
     ------------------------------------------------
-    UUT : ENDFIRE
+    UUT : I2S
         generic map(
 
             -- Constants
             mClkFreq  => 30720000,  -- Master Clock Frequency
             lrClkFreq => 96000,     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
             bitWidth  => 16,        -- Audio Data Size
-            nChan     => 2,         -- Number of Channels
-            tableSize => 4096       -- Sine Table Depth
+            nChan     => 2         -- Number of Channels
 
         )
 
         port map(
-            MODE,   -- Endfire switch
-            ENABLE, -- Reset
-            MCLK,   -- Master Clock
+
+            -- Outputs
+            PHONE1 => d1out, -- Phone 1 bit
+            PHONE2 => d2out, -- Phone 2 bit
+            PHONE3 => d3out, -- Phone 3 bit
+            PHONE4 => d4out,  -- Phone 4 bit
             
-            LRCLK,  -- Frame Sync Clock
-            BCLK,   -- Bit Sync Clock
-            PHONE1, -- Phone 1 bit
-            PHONE2, -- Phone 2 bit
-            PHONE3, -- Phone 3 bit
-            PHONE4  -- Phone 4 bit
+            LRCLK => lrOut, -- Frame Sync Clock
+            BCLK  => bOut,  -- Bit Sync Clock
+            READY => rOut,  -- Data Ready Signal
+            
+            -- Inputs
+            ENABLE => enableTb, -- Rest
+            MCLK   => mclkTb,   -- Master Clock (30.72 MHz)
+            VALID  => validTb,  -- Data Valid Signal
+
+            DIN1 => ph1din,   -- Phone 1 Data Input
+            DIN2 => ph2din,   -- Phone 2 Data Input
+            DIN3 => ph3din,   -- Phone 3 Data Input
+            DIN4 => ph4din   -- Phone 4 Data Input
+
         );
 
 
@@ -113,11 +125,11 @@ architecture SIM of I2S_TB is
         -- Clock & Reset Driver
         ------------------------------------------------
         process begin
-            enable <= '0', '1' after TCLK;
-            mclk   <= '0';
+            enableTb <= '0', '1' after TCLK;
+            mclktB   <= '0';
             wait for 2 * TCLK;
             while not DONE loop
-                mclk <= '1', '0' after TCLK / 2;
+                mclktB <= '1', '0' after TCLK / 2;
                 wait for TCLK;
             end loop;
             report "Simulation complete." severity note;
@@ -131,7 +143,7 @@ architecture SIM of I2S_TB is
         -- Drive the valid and data signals
         process begin
 
-            valid <= '1';
+            validTb <= '1';
 
             wait;
         end process;
