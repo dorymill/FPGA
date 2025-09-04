@@ -146,7 +146,7 @@ architecture RTL of Top is
         -- Instantiate the LED Sweep Module
         LED_inst : LED_SWEEP
             port map(
-                CLK    => MCLK
+                CLK    => MCLK,
                 ENABLE => ENABLE,
                 LED    => LED
             );
