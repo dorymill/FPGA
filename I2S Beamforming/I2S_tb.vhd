@@ -35,18 +35,18 @@ architecture SIM of I2S_TB is
             VALID    : in std_logic; -- Data Valid Signal
 
             DIN1     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
-            DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
-            DIN3     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
-            DIN4     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
+            -- DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
+            -- DIN3     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
+            -- DIN4     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
 
             PHONE1   : out std_logic; -- Phone 1 bit output
-            PHONE2   : out std_logic; -- Phone 2 bit output
-            PHONE3   : out std_logic; -- Phone 3 bit output
-            PHONE4   : out std_logic; -- Phone 4 bit output
+            -- PHONE2   : out std_logic; -- Phone 2 bit output
+            -- PHONE3   : out std_logic; -- Phone 3 bit output
+            -- PHONE4   : out std_logic; -- Phone 4 bit output
             
             LRCLK    : out std_logic; -- Frame Sync Clock
-            BCLK     : out std_logic; -- Bit Sync Clock
-            READY    : out std_logic -- Data Ready Signal
+            BCLK     : out std_logic -- Bit Sync Clock
+            -- READY    : out std_logic -- Data Ready Signal
 
         );
 
@@ -61,19 +61,19 @@ architecture SIM of I2S_TB is
     signal mclkTb   : std_logic := '0'; -- Master Clock
     signal validTb  : std_logic := '1'; -- Data Valid Signal
             
-    signal ph1din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 1 data input
-    signal ph2din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 2 data input
-    signal ph3din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 3 data input
-    signal ph4din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 4 data input
+    signal d1InRegTb : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 1 data input
+    -- signal ph2din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 2 data input
+    -- signal ph3din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 3 data input
+    -- signal ph4din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 4 data input
 
     -- Outputs from UUT
-    signal d1out : std_logic; -- Phone 1 bit output
-    signal d2out : std_logic; -- Phone 2 bit output
-    signal d3out : std_logic; -- Phone 3 bit output
-    signal d4out : std_logic; -- Phone 4 bit output
-    signal lrOut: std_logic; -- Frame Sync Clock
-    signal bOut : std_logic; -- Bit Sync Clock
-    signal rOut : std_logic; -- Data Ready Signal
+    -- signal d1out : std_logic; -- Phone 1 bit output
+    -- signal d2out : std_logic; -- Phone 2 bit output
+    -- signal d3out : std_logic; -- Phone 3 bit output
+    -- signal d4out : std_logic; -- Phone 4 bit output
+    -- signal lrOut: std_logic; -- Frame Sync Clock
+    -- signal bOut : std_logic; -- Bit Sync Clock
+    -- signal rOut : std_logic; -- Data Ready Signal
 
     constant CFR   : real    := 30.72e6;     -- Crystal Frequency
     constant TCLK  : time    := 1 sec / CFR; --I2S CLK Frequency
@@ -99,24 +99,24 @@ architecture SIM of I2S_TB is
         port map(
 
             -- Outputs
-            PHONE1 => d1out, -- Phone 1 bit
-            PHONE2 => d2out, -- Phone 2 bit
-            PHONE3 => d3out, -- Phone 3 bit
-            PHONE4 => d4out,  -- Phone 4 bit
+            -- PHONE1 => d1out, -- Phone 1 bit
+            -- PHONE2 => d2out, -- Phone 2 bit
+            -- PHONE3 => d3out, -- Phone 3 bit
+            -- PHONE4 => d4out,  -- Phone 4 bit
             
-            LRCLK => lrOut, -- Frame Sync Clock
-            BCLK  => bOut,  -- Bit Sync Clock
-            READY => rOut,  -- Data Ready Signal
+            -- LRCLK => lrOut, -- Frame Sync Clock
+            -- BCLK  => bOut,  -- Bit Sync Clock
+            -- READY => rOut,  -- Data Ready Signal
             
             -- Inputs
             ENABLE => enableTb, -- Rest
             MCLK   => mclkTb,   -- Master Clock (30.72 MHz)
             VALID  => validTb,  -- Data Valid Signal
 
-            DIN1 => ph1din,   -- Phone 1 Data Input
-            DIN2 => ph2din,   -- Phone 2 Data Input
-            DIN3 => ph3din,   -- Phone 3 Data Input
-            DIN4 => ph4din   -- Phone 4 Data Input
+            DIN1 => d1InRegTb   -- Phone 1 Data Input
+            -- DIN2 => ph2din,   -- Phone 2 Data Input
+            -- DIN3 => ph3din,   -- Phone 3 Data Input
+            -- DIN4 => ph4din   -- Phone 4 Data Input
 
         );
 
@@ -144,6 +144,13 @@ architecture SIM of I2S_TB is
         process begin
 
             validTb <= '1';
+            
+            while not DONE loop
+                enableTb <= '1';
+                wait for 100 ms;
+                enableTb <= '0';
+                wait for 100 ms;
+            end loop;
 
             wait;
         end process;

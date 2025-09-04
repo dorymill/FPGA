@@ -22,9 +22,9 @@ entity I2S is
     generic ( -- Constants 
 
         mClkFreq  : integer := 30720000;  -- Master Clock Frequency
-        lrClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
+        fsClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
         bitWidth  : integer := 16;        -- Audio Data Size
-        nChan     : integer := 2         -- Number of Channels
+        nChan     : integer := 2          -- Number of Channels
 
     );
 
@@ -35,14 +35,14 @@ entity I2S is
         VALID    : in std_logic; -- Data Valid Signal
 
         DIN1     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
-        DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
-        DIN3     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
-        DIN4     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
+        -- DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
+        -- DIN3     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
+        -- DIN4     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
 
         PHONE1   : out std_logic; -- Phone 1 bit output
-        PHONE2   : out std_logic; -- Phone 2 bit output
-        PHONE3   : out std_logic; -- Phone 3 bit output
-        PHONE4   : out std_logic; -- Phone 4 bit output
+        -- PHONE2   : out std_logic; -- Phone 2 bit output
+        -- PHONE3   : out std_logic; -- Phone 3 bit output
+        -- PHONE4   : out std_logic; -- Phone 4 bit output
         
         LRCLK    : out std_logic; -- Frame Sync Clock
         BCLK     : out std_logic; -- Bit Sync Clock
@@ -57,159 +57,106 @@ architecture RTL of I2S is
 ------------------------------------------------
 
     -- Constants
-    constant lrClkCntMax  : integer := (mClkFreq / lrClkFreq) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
-    constant bitClkCntMax : integer := (mclkFreq / (lrClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
+    constant fsClkCntMax  : integer := (mClkFreq / fsClkFreq) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
+    constant bitClkCntMax : integer := (mclkFreq / (fsClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
     constant bitCntMax    : integer := bitWidth - 1;                                -- Data width
     
     -- Signals
     -- Counters
-    signal lrClkCntr  : integer range 0 to lrClkCntMax;  -- Frame Sync Clock Cycle Counter
+    signal fsClkCntr  : integer range 0 to fsClkCntMax;  -- Frame Sync Clock Cycle Counter
     signal bitClkCntr : integer range 0 to bitClkCntMax; -- Bit Sync CLock Cycle Counter
     signal bitCntr    : integer range 0 to bitWidth - 1; -- Clocked bits counter
 
     -- Inputs
-    signal ph1inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
-    signal ph2inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
-    signal ph3inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
-    signal ph4inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
+    signal en      : std_logic; -- Enable
+    signal d1InReg : std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
+    -- signal ph2inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
+    -- signal ph3inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
+    -- signal ph4inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
 
     signal validSig : std_logic; -- Data Valid Signal
 
     -- Outputs
-    signal lrClock   : std_logic := '0'; -- Frame Sync Clock output
-    signal bitClock  : std_logic := '0'; -- Bit Sync Clock output
+    signal fsClk     : std_logic := '0'; -- Frame Sync Clock output
+    signal bitClk    : std_logic := '0'; -- Bit Sync Clock output
+    signal readySig  : std_logic := '0'; -- Data Ready Signal
+    signal d1Out     : std_logic := '0'; -- Phone 1 bit output
 
-    signal readySig     : std_logic := '0'; -- Data Ready Signal
+    -- Maintenance
+    signal d1ShiftReg : std_logic_vector(2*bitWidth - 1 downto 0); -- Phone 1 Shift Register
 
-    -- State Maintenance
-    signal firstBit  : boolean := TRUE;  -- First bit flag
-    signal firstWord : boolean := TRUE;  -- First word flag
 
     begin -- Concurrent Statements & Component Instantiation
 
         -- Physical Connections to variables
         -- Clocks
-        LRCLK  <= lrClock;   -- Connect Frame Sync
-        BCLK   <= bitClock;  -- Connect Bit Sync
+        fsClk <= fsClk;   -- Connect Frame Sync
+        BCLK   <= bitClk;  -- Connect Bit Sync
 
         -- Data Validation
         READY    <= readySig;  -- Connect Data Ready
         validSig <= VALID;     -- Connect Data Valid
 
         -- Data Inputs
-        ph1inSig <= DIN1;  -- Connect Phone 1 Data Input
-        ph2inSig <= DIN2;  -- Connect Phone 2 Data Input
-        ph3inSig <= DIN3;  -- Connect Phone 3 Data Input
-        ph4inSig <= DIN4;  -- Connect Phone 4 Data Input
+        en      <= ENABLE;        -- Connect Enable
+        d1InReg <= DIN1;  -- Connect Phone 1 Data Input
+        -- ph2inSig <= DIN2;  -- Connect Phone 2 Data Input
+        -- ph3inSig <= DIN3;  -- Connect Phone 3 Data Input
+        -- ph4inSig <= DIN4;  -- Connect Phone 4 Data Input
+
+        -- Data Outputs
+        PHONE1 <= d1Out;  -- Connect Phone 1 bit output
 
         ------------------------------------------------
-        LRCLK_PROC: process(MCLK)  -- Frame Sync Clock
+        FSCLK_PROC: process(MCLK)  -- Frame Sync Clock
         ------------------------------------------------
         begin
-            if(ENABLE = '1') then
+            if(rising_edge(MCLK)) then
+                if(ENABLE = '1') then
                 -- Transition at clock rise
-                if(rising_edge(MCLK)) then
-                    if (lrClkCntr = lrClkCntMax) then
-                        lrClock <= not lrClock;
-                        lrClkCntr <= 0;
+                    if (fsClkCntr = fsClkCntMax) then
+                        fsClk <= not fsClk;
+                        fsClkCntr <= 0;
                     else
-                        lrClkCntr <= lrClkCntr + 1;
+                        fsClkCntr <= fsClkCntr + 1;
                     end if;
+                else
+                    fsClk <= '0';
                 end if;
-            else
-                lrClock <= '0';
             end if;
-        end process LRCLK_PROC;
+        end process FSCLK_PROC;
 
         ------------------------------------------------
         BITSYNC_PROC: process(MCLK)  -- Bit Sync Clock
         ------------------------------------------------
         begin
-            if(ENABLE = '1') then
-                -- Transition LRCLK Rise
-                if(rising_edge(MCLK)) then
+            if(rising_edge(MCLK)) then
+                if(ENABLE = '1') then
+                -- Transition fsClk Rise
                     if (bitClkCntr = bitClkCntMax) then
-                        bitClock <= not bitClock;
+                        bitClk <= not bitClk;
                         bitClkCntr <= 0;
                     else
                         bitClkCntr <= bitClkCntr + 1;
                     end if;
+                else
+                    bitClk <= '0';
                 end if;
-            else
-                bitClock <= '0';
             end if;
         end process BITSYNC_PROC;
 
         ------------------------------------------------
-        DATA_PROC: process(MCLK)  -- Data Processing
+        DATA_PROC: process(MCLK)  -- Data Clocking
         ------------------------------------------------
-        -- Note that when syncing bits in the I2S standard,
-        -- there is a 1 bit sync cycle delay after frame sync
-        -- has toggled to the respective channel.
         begin
-        
-            if (rising_edge(MCLK)) then
-                if (ENABLE = '1') then
-                    -- Start clocking data when data is valid and drive the ready flag low
-                    if(valid = '1') then
-                        -- Drive ready low while clocking out data
-                        readySig <= '0';
-                        -- If we're on the falling edge of the bit clock, change the data
-                        if (bitClkCntr = bitClkCntMax and bitClock = '1') then
+            if(rising_edge(MCLK)) then
+                if(ENABLE = '1') then
 
-                            -- Check bit counter
-                            if (bitCntr = bitCntMax) then
-                                bitCntr <= 0;
-                            else
-                                bitCntr <= bitCntr + 1;
-                            end if;
 
-                            -- Check to see if this is the first bit
-                            if (firstBit = TRUE) then
-                                PHONE1 <= '0';
-                                PHONE2 <= '0';
-                                PHONE3 <= '0';
-                                PHONE4 <= '0';
-                            
-                                firstBit <= FALSE;
-                            end if;
-
-                            -- If not the first bit, proceed with data output
-                            if (firstBit = FALSE) then
-
-                                -- Alternate through the two channels
-                                if(firstWord = TRUE) then
-                                    PHONE1 <= ph1inSig(bitWidth - 1 - bitCntr);
-                                    PHONE2 <= ph2inSig(bitWidth - 1 - bitCntr);
-                                    PHONE3 <= ph3inSig(bitWidth - 1 - bitCntr);
-                                    PHONE4 <= ph4inSig(bitWidth - 1 - bitCntr);
-
-                                    firstWord <= FALSE;
-                                else
-                                    PHONE1 <= ph1inSig(bitWidth - 1 - bitCntr);
-                                    PHONE2 <= ph2inSig(bitWidth - 1 - bitCntr);
-                                    PHONE3 <= ph3inSig(bitWidth - 1 - bitCntr);
-                                    PHONE4 <= ph4inSig(bitWidth - 1 - bitCntr);
-
-                                    firstWord <= TRUE;
-                                end if;
-                            end if;
-                        end if;
-
-                        -- Drive ready high after we've clocked out the last bit.
-                        if (bitCntr = bitCntMax and bitClkCntr = bitClkCntMax and bitClock = '1') then
-                            readySig <= '1';
-                        end if;
-
-                    else
-                        PHONE1 <= '0';
-                        PHONE2 <= '0';
-                        PHONE3 <= '0';
-                        PHONE4 <= '0';
-                    end if;
+                    
                 end if;
             end if;
-
         end process DATA_PROC;
+
 
     end architecture RTL;
