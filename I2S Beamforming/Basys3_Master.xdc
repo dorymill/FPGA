@@ -44,14 +44,14 @@ set_property PACKAGE_PIN V16 [get_ports {MODE}]
  
 
 # LEDs
-set_property PACKAGE_PIN U16 [get_ports {A}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {A}]
-set_property PACKAGE_PIN E19 [get_ports {B}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {B}]
-set_property PACKAGE_PIN U19 [get_ports {C}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {C}]
-set_property PACKAGE_PIN V19 [get_ports {D}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {D}]
+set_property PACKAGE_PIN U16 [get_ports {LED[0]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {LED[0]}]
+set_property PACKAGE_PIN E19 [get_ports {LED[1]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {LED[1]}]
+set_property PACKAGE_PIN U19 [get_ports {LED[2]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {LED[2]}]
+set_property PACKAGE_PIN V19 [get_ports {LED[3]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {LED[3]}]
 set_property PACKAGE_PIN W18 [get_ports {LED[4]}]					
 	set_property IOSTANDARD LVCMOS33 [get_ports {LED[4]}]
 set_property PACKAGE_PIN U15 [get_ports {LED[5]}]					
@@ -169,11 +169,11 @@ set_property PACKAGE_PIN A15 [get_ports {PHONE3}]
 set_property PACKAGE_PIN A17 [get_ports {PHONE4}]					
 	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE4}]
 ##Sch name = JB9
-#set_property PACKAGE_PIN C15 [get_ports {JB[6]}]					
-	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[6]}]
-##Sch name = JB10 
-#set_property PACKAGE_PIN C16 [get_ports {JB[7]}]					
-	#set_property IOSTANDARD LVCMOS33 [get_ports {JB[7]}]
+set_property PACKAGE_PIN C15 [get_ports {VALID}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {VALID}]
+#Sch name = JB10 
+set_property PACKAGE_PIN C16 [get_ports {READY}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {READY}]
  
 
 

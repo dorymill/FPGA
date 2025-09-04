@@ -74,7 +74,7 @@ architecture RTL of I2S is
     -- signal ph3inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
     -- signal ph4inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
 
-    signal validSig : std_logic; -- Data Valid Signal
+    signal validSig : std_logic := '1'; -- Data Valid Signal
 
     -- Outputs
     signal fsClk     : std_logic := '0'; -- Frame Sync Clock output
