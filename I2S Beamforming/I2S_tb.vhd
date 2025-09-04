@@ -22,7 +22,7 @@ architecture SIM of I2S_TB is
         generic ( -- Constants 
 
             mClkFreq  : integer := 30720000;  -- Master Clock Frequency
-            lrClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
+            fsClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
             bitWidth  : integer := 16;        -- Audio Data Size
             nChan     : integer := 2         -- Number of Channels
 
@@ -45,8 +45,8 @@ architecture SIM of I2S_TB is
             -- PHONE4   : out std_logic; -- Phone 4 bit output
             
             LRCLK    : out std_logic; -- Frame Sync Clock
-            BCLK     : out std_logic -- Bit Sync Clock
-            -- READY    : out std_logic -- Data Ready Signal
+            BCLK     : out std_logic; -- Bit Sync Clock
+            READY    : out std_logic -- Data Ready Signal
 
         );
 
@@ -56,7 +56,7 @@ architecture SIM of I2S_TB is
     constant bitWdith : integer := 16;        -- Audio Data Size
 
     -- Signals
-    -- Outputs to UUT
+    -- Inputs to UUT
     signal enableTb : std_logic := '1'; -- Reset
     signal mclkTb   : std_logic := '0'; -- Master Clock
     signal validTb  : std_logic := '1'; -- Data Valid Signal
@@ -66,14 +66,6 @@ architecture SIM of I2S_TB is
     -- signal ph3din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 3 data input
     -- signal ph4din : std_logic_vector (bitWdith - 1 downto 0) := "1010101010101010"; -- Phone 4 data input
 
-    -- Outputs from UUT
-    -- signal d1out : std_logic; -- Phone 1 bit output
-    -- signal d2out : std_logic; -- Phone 2 bit output
-    -- signal d3out : std_logic; -- Phone 3 bit output
-    -- signal d4out : std_logic; -- Phone 4 bit output
-    -- signal lrOut: std_logic; -- Frame Sync Clock
-    -- signal bOut : std_logic; -- Bit Sync Clock
-    -- signal rOut : std_logic; -- Data Ready Signal
 
     constant CFR   : real    := 30.72e6;     -- Crystal Frequency
     constant TCLK  : time    := 1 sec / CFR; --I2S CLK Frequency
@@ -90,7 +82,7 @@ architecture SIM of I2S_TB is
 
             -- Constants
             mClkFreq  => 30720000,  -- Master Clock Frequency
-            lrClkFreq => 96000,     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
+            fsClkFreq => 96000,     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
             bitWidth  => 16,        -- Audio Data Size
             nChan     => 2         -- Number of Channels
 
@@ -98,16 +90,6 @@ architecture SIM of I2S_TB is
 
         port map(
 
-            -- Outputs
-            -- PHONE1 => d1out, -- Phone 1 bit
-            -- PHONE2 => d2out, -- Phone 2 bit
-            -- PHONE3 => d3out, -- Phone 3 bit
-            -- PHONE4 => d4out,  -- Phone 4 bit
-            
-            -- LRCLK => lrOut, -- Frame Sync Clock
-            -- BCLK  => bOut,  -- Bit Sync Clock
-            -- READY => rOut,  -- Data Ready Signal
-            
             -- Inputs
             ENABLE => enableTb, -- Rest
             MCLK   => mclkTb,   -- Master Clock (30.72 MHz)
@@ -144,13 +126,7 @@ architecture SIM of I2S_TB is
         process begin
 
             validTb <= '1';
-            
-            while not DONE loop
-                enableTb <= '1';
-                wait for 100 ms;
-                enableTb <= '0';
-                wait for 100 ms;
-            end loop;
+            d1InRegTb <= "1000000000000001";
 
             wait;
         end process;
@@ -160,7 +136,7 @@ architecture SIM of I2S_TB is
         ------------------------------------------------
         process begin
 
-
+            
 
             wait;
         end process;

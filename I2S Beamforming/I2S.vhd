@@ -63,9 +63,9 @@ architecture RTL of I2S is
     
     -- Signals
     -- Counters
-    signal fsClkCntr  : integer range 0 to fsClkCntMax;  -- Frame Sync Clock Cycle Counter
-    signal bitClkCntr : integer range 0 to bitClkCntMax; -- Bit Sync CLock Cycle Counter
-    signal bitCntr    : integer range 0 to bitWidth - 1; -- Clocked bits counter
+    signal fsClkCntr  : integer := 0;  -- Frame Sync Clock Cycle Counter
+    signal bitClkCntr : integer := 0; -- Bit Sync CLock Cycle Counter
+    signal bitCntr    : integer := 0; -- Clocked bits counter
 
     -- Inputs
     signal en      : std_logic; -- Enable
@@ -79,18 +79,18 @@ architecture RTL of I2S is
     -- Outputs
     signal fsClk     : std_logic := '0'; -- Frame Sync Clock output
     signal bitClk    : std_logic := '0'; -- Bit Sync Clock output
-    signal readySig  : std_logic := '0'; -- Data Ready Signal
+    signal readySig  : std_logic := '1'; -- Data Ready Signal
     signal d1Out     : std_logic := '0'; -- Phone 1 bit output
 
     -- Maintenance
-    signal d1ShiftReg : std_logic_vector(2*bitWidth - 1 downto 0); -- Phone 1 Shift Register
+    signal d1ShiftReg : std_logic_vector(2*bitWidth - 1 downto 0) := (others => '0'); -- Phone 1 Shift Register
 
 
     begin -- Concurrent Statements & Component Instantiation
 
         -- Physical Connections to variables
         -- Clocks
-        fsClk <= fsClk;   -- Connect Frame Sync
+        LRCLK <= fsClk;   -- Connect Frame Sync
         BCLK   <= bitClk;  -- Connect Bit Sync
 
         -- Data Validation
@@ -151,12 +151,47 @@ architecture RTL of I2S is
         begin
             if(rising_edge(MCLK)) then
                 if(ENABLE = '1') then
+                    -- We change data on falling bit clock edges
+                    if(bitClk = '1' and bitClkCntr = bitClkCntMax) then
+                        -- Shift data out
+                        d1Out <= d1ShiftReg(2*bitWidth - 1);
+                        d1ShiftReg <= d1ShiftReg(2*bitWidth - 2 downto 0) & '0';
 
+                        -- Increment bit counter
+                        if(bitCntr = 2*bitWidth -1) then
+                            bitCntr <= 0;
+                        else
+                            bitCntr <= bitCntr + 1;
+                        end if;
 
-                    
+                    end if;
+
+                    -- Reload shift register after all bits are clocked out
+                    if(readySig = '1' and validSig = '1') then
+                        d1ShiftReg <= d1InReg & d1InReg;
+                    end if;
+
                 end if;
+
             end if;
+
         end process DATA_PROC;
 
+        ------------------------------------------------
+        READY_PROC: process(MCLK)  -- Ready Signal Proc
+        ------------------------------------------------
+        begin
+            if(rising_edge(MCLK)) then
+                if(ENABLE = '1') then
+                    -- Drive ready on the falling edge after the last bit is clocked out
+                    if(bitClk = '1' and bitClkCntr = bitClkCntMax and bitCntr = 0) then
+                        readySig <= '1';
+                    else
+                        readySig <= '0';
+                    end if;
+                end if;
+            end if;
+
+        end process READY_PROC;
 
     end architecture RTL;
