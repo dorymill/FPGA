@@ -16,12 +16,14 @@ end entity TestBench;
 ------------------------------------------------
 architecture AXIS_RAM_SIM of TestBench is
 ------------------------------------------------
-    -- UUT Component Declaration
-------------------------------------------------
+
+    ------------------------------------------------
+        -- UUT Component Declaration
+    ------------------------------------------------
     component AXIS_RAM is
         generic ( -- Constants
 
-            ramWidth : natural; -- Width in bits of the RAM DAta bus
+            ramWidth : natural;   -- Width in bits of the RAM DAta bus
             ramDepth : natural  -- Number of ramWidth size "slots" available 
 
         );
@@ -32,36 +34,82 @@ architecture AXIS_RAM_SIM of TestBench is
             RST : in std_logic;  -- Reset Line
 
             -- AXI Stream Input Lines
-            RXREADY : out std_logic;
-            RXVALID : in std_logic;
-            RXDATA  : in std_logic_vector(ramWidth - 1 downto 0);
+            RX_READY : out std_logic;
+            RX_VALID : in std_logic;
+            RX_DATA  : in std_logic_vector(ramWidth - 1 downto 0);
 
             -- AXI Stream Output Lines
-            TXREADY : in std_logic;
-            TXVALID : out std_logic;
-            TXDATA  : out std_logic_vector(ramWidth - 1 downto 0)
+            TX_READY : in std_logic;
+            TX_VALID : out std_logic;
+            TX_DATA  : out std_logic_vector(ramWidth - 1 downto 0)
 
         );
     end component;
+    
+    
+    ------------------------------------------------
+    -- Signals to wire to the UUT
+    ------------------------------------------------
+       
+    -- Sim
+    constant simWidth : natural := 16;
+    constant simDepth : natural := 512;
+    constant tClk : time    := 10 ns;
+    signal DONE   : boolean := FALSE;
+    
+    -- Inputs to the UUT
+    signal clk     : std_logic := '0';
+    signal rst     : std_logic := '0';
+    signal rxValid : std_logic := '0';
+    signal txReady : std_logic := '0';
+    signal dataVal : integer   :=  0;
+    signal txData  : std_logic_vector(simWidth - 1 downto 0) := (others => '0');
+    
+    
+    -- Outputs from the UUT
+    signal txValid : std_logic := '0';
+    signal rxReady : std_logic := '0';
+    signal rxData  : std_logic_vector(simWidth - 1 downto 0) := (others => '0');
+
 
 
     begin
 
-    ------------------------------------------------
-    -- Unit Under Test
-    ------------------------------------------------
-    UUT : 
+        txData <= std_logic_vector(to_unsigned(dataVal, simWidth));
+
+        ------------------------------------------------
+        -- Unit Under Test
+        ------------------------------------------------
+        UUT : AXIS_RAM
+            generic map (
+                ramWidth => simWidth,
+                ramDepth => simDepth
+            )
+
+            port map (
+
+                CLK => clk,
+                RST => rst,
+
+                RX_READY => rxReady,
+                RX_VALID => txValid,
+                RX_DATA => txData,
+
+                TX_READY => txReady,
+                TX_VALID => rxValid,
+                TX_DATA => rxData
+
+            );
 
         ------------------------------------------------
         -- Clock & Reset Driver
         ------------------------------------------------
         process begin
-            ENABLE <= '0', '1' after TCLK;
-            CLK   <= '0';
-            wait for 2 * TCLK;
+            clk   <= '0';
+            wait for 2 * tClk;
             while not DONE loop
-                CLK <= '1', '0' after TCLK / 2;
-                wait for TCLK;
+                clk <= '1', '0' after tClk / 2;
+                wait for tClk;
             end loop;
             report "Simulation complete." severity note;
             wait;
@@ -72,13 +120,29 @@ architecture AXIS_RAM_SIM of TestBench is
         ------------------------------------------------
         process begin
 
-            -- Signal Initialization
-            SW        <= "10000000";
+            wait for  100*tClk;
 
-            -- Vibe for a million cycles
-            wait for 1000000 * TCLK;
+            -- Write in a bunch of data
+            for idx in 0 to 511 loop
 
-            -- Test Signal generation logic
+                dataVal <= idx;
+
+                wait for  1*tClk;
+
+                if rxReady = '1' then
+                    txValid <= '1';
+                end if;
+
+                wait for  1*tClk;
+
+                txValid <= '0';
+
+                wait for  1000*tClk;
+            end loop;
+
+            -- Read it all out
+
+
             DONE <= TRUE;
             wait;
         end process;

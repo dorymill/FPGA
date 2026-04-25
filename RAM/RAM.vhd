@@ -87,7 +87,7 @@ architecture RTL of AXIS_RAM is
     ) return index_type is
         begin
             -- If Ready and Valid, I/O is occurring, increment the pointers
-            if ready='1' and valid = '1' then 
+            if ready = '1' and valid = '1' then 
                 if index = index_type'high then -- If we're at the top, rollover to the bottom
                     return index_type'low;
                 else
@@ -128,7 +128,7 @@ architecture RTL of AXIS_RAM is
         ------------------------------------------------
         RX_READY <= rxReady; -- Wire the AXIS Ready port to an internal signal
         TX_VALID <= txValid; -- Wire the AXIS Valid port to an internal signal
-                             -- Note: Outputs can't be used directly
+                             
 
 
         ------------------------------------------------
@@ -146,7 +146,11 @@ architecture RTL of AXIS_RAM is
         RAM_PROCESS : process(CLK)
         begin
             if rising_edge(CLK) then
-                ram(head) <= RX_DATA;
+
+                if count /= ramDepth - 1 then    -- This conditional protects from
+                    ram(head) <= RX_DATA;        -- overwriting the last address when
+                end if;                          -- we're full.
+
                 TX_DATA    <= ram(nextIndex(tail, TX_READY, txValid));
             end if;
         end process;
