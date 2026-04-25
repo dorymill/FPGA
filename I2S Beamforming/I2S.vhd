@@ -154,8 +154,8 @@ architecture RTL of I2S is
                     -- We change data on falling bit clock edges
                     if(bitClk = '1' and bitClkCntr = bitClkCntMax) then
                         -- Shift data out
-                        d1Out <= d1ShiftReg(2*bitWidth - 1);
                         d1ShiftReg <= d1ShiftReg(2*bitWidth - 2 downto 0) & '0';
+                        d1Out <= d1ShiftReg(2*bitWidth - 1);
 
                         -- Increment bit counter
                         if(bitCntr = 2*bitWidth -1) then
