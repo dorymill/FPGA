@@ -92,11 +92,11 @@ architecture AXIS_RAM_SIM of TestBench is
                 RST => rst,
 
                 RX_READY => rxReady,
-                RX_VALID => txValid,
+                RX_VALID => rxValid,
                 RX_DATA => txData,
 
                 TX_READY => txReady,
-                TX_VALID => rxValid,
+                TX_VALID => txValid,
                 TX_DATA => rxData
 
             );
@@ -130,12 +130,12 @@ architecture AXIS_RAM_SIM of TestBench is
                 wait for  1*tClk;
 
                 if rxReady = '1' then
-                    txValid <= '1';
+                    rxValid <= '1';
                 end if;
 
                 wait for  1*tClk;
 
-                txValid <= '0';
+                rxValid <= '0';
 
                 wait for  1000*tClk;
             end loop;
