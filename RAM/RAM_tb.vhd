@@ -127,17 +127,17 @@ architecture AXIS_RAM_SIM of TestBench is
 
                 dataVal <= idx;
 
-                wait for  1*tClk;
+                wait for  2*tClk;
 
                 if rxReady = '1' then
                     rxValid <= '1';
                 end if;
 
-                wait for  1*tClk;
+                wait for  0.5*tClk;
 
                 rxValid <= '0';
 
-                wait for  1000*tClk;
+                wait for  1000.5*tClk;
             end loop;
 
             -- Read it all out

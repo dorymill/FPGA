@@ -52,11 +52,11 @@ architecture RTL of AXIS_RAM is
     -- Constants, Types, and Signals
     ------------------------------------------------
 
-    -- RAM Type Declartion
+    -- RAM Type Declartion (Init to zeroes)
     type ram_type is array (0 to ramDepth -1)
         of std_logic_vector(RX_DATA'range);
 
-    signal ram : ram_type;
+    signal ram : ram_type := (others => (others => '0'));
 
     -- AXI Signals
     signal rxReady : std_logic := '0';
@@ -146,12 +146,18 @@ architecture RTL of AXIS_RAM is
         RAM_PROCESS : process(CLK)
         begin
             if rising_edge(CLK) then
+                if RST = '1' then
+                    ram <= (others => (others => '0'));
+                else
+                    -- This conditional protects from
+                    -- overwriting the last address when
+                    -- we're full and double writing two addresses.
+                    if count /= ramDepth - 1 and RX_VALID = '1'  then    
+                        ram(head) <= RX_DATA;                            
+                    end if;                                              
 
-                if count /= ramDepth - 1 then    -- This conditional protects from
-                    ram(head) <= RX_DATA;        -- overwriting the last address when
-                end if;                          -- we're full.
-
-                TX_DATA    <= ram(nextIndex(tail, TX_READY, txValid));
+                    TX_DATA    <= ram(nextIndex(tail, TX_READY, txValid));
+                end if;
             end if;
         end process;
 
