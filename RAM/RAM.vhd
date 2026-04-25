@@ -30,14 +30,14 @@ entity AXIS_RAM is
         RST : in std_logic;  -- Reset Line
 
         -- AXI Stream Input Lines
-        RXREADY : out std_logic;
-        RXVALID : in std_logic;
-        RXDATA  : in std_logic_vector(ramWidth - 1 downto 0);
+        RX_READY : out std_logic;
+        RX_VALID : in std_logic;
+        RX_DATA  : in std_logic_vector(ramWidth - 1 downto 0);
 
         -- AXI Stream Output Lines
-        TXREADY : in std_logic;
-        TXVALID : out std_logic;
-        TXDATA  : out std_logic_vector(ramWidth - 1 downto 0)
+        TX_READY : in std_logic;
+        TX_VALID : out std_logic;
+        TX_DATA  : out std_logic_vector(ramWidth - 1 downto 0)
 
     );
 
@@ -54,17 +54,13 @@ architecture RTL of AXIS_RAM is
 
     -- RAM Type Declartion
     type ram_type is array (0 to ramDepth -1)
-        of std_logic_vector(RXDATA'range);
+        of std_logic_vector(RX_DATA'range);
 
     signal ram : ram_type;
 
-    -- Constants
-    constant ramWidth : natural := ramWidth;
-    constant ramDepth : natural := ramDepth;
-
     -- AXI Signals
-    signal rxReady : std_logic := 0;
-    signal txValid : std_logic := 0;
+    signal rxReady : std_logic := '0';
+    signal txValid : std_logic := '0';
 
     -- RAM Processing Signals
     subtype index_type is natural range ram_type'range; -- Constraint to the size of the RAM via typedef
@@ -93,7 +89,7 @@ architecture RTL of AXIS_RAM is
             -- If Ready and Valid, I/O is occurring, increment the pointers
             if ready='1' and valid = '1' then 
                 if index = index_type'high then -- If we're at the top, rollover to the bottom
-                    return index_type'low
+                    return index_type'low;
                 else
                     return index + 1; -- Increment otherwise
                 end if;
@@ -125,23 +121,24 @@ architecture RTL of AXIS_RAM is
             end if;
         end procedure;
 
-    
-    ------------------------------------------------
-    -- Concurrent Statements
-    ------------------------------------------------
-    RXREADY <= rxReady; -- Wire the AXIS Ready port to an internal signal
-    TXVALID <= txValid; -- Wire the AXIS Valid port to an internal signal
-                        -- Note: Outputs can't be used directly
-
     begin
+
+        ------------------------------------------------
+        -- Concurrent Statements
+        ------------------------------------------------
+        RX_READY <= rxReady; -- Wire the AXIS Ready port to an internal signal
+        TX_VALID <= txValid; -- Wire the AXIS Valid port to an internal signal
+                             -- Note: Outputs can't be used directly
+
+
         ------------------------------------------------
         -- Processes
         ------------------------------------------------
         
         -- These two processes handles the explicit motion of the R/W
         -- pointer every clock cycle and with a synchronous reset
-        HEAD_PROCESS : indexProc(CLK, RST, head, rxReady, RXVALID);
-        TAIL_PROCESS : indexProc(CLK, RST, tail, TXREADY, txValid);
+        HEAD_PROCESS : indexProc(CLK, RST, head, rxReady, RX_VALID);
+        TAIL_PROCESS : indexProc(CLK, RST, tail, TX_READY, txValid);
 
         -- This proccess handles the I/O operation 
         -- for the RAM FIFO itself, setting the input and 
@@ -149,8 +146,8 @@ architecture RTL of AXIS_RAM is
         RAM_PROCESS : process(CLK)
         begin
             if rising_edge(CLK) then
-                ram(head) <= RXDATA;
-                TXDATA    <= ram(nextIndex(tail, TXREADY, txValid));
+                ram(head) <= RX_DATA;
+                TX_DATA    <= ram(nextIndex(tail, TX_READY, txValid));
             end if;
         end process;
 
@@ -206,8 +203,8 @@ architecture RTL of AXIS_RAM is
                     rxTxSimul <= '0';
 
                     -- If all the I/O Flags are high, trigger the simul flag
-                    if rxReady = '1' and TXVALID = '1' and
-                       TXREADY = '1' and rxValid = '1' then
+                    if rxReady = '1' and txValid = '1' and
+                       TX_READY = '1' and RX_VALID = '1' then
                             rxTxSimul <= '1';
                     end if;
                 end if;
@@ -222,7 +219,7 @@ architecture RTL of AXIS_RAM is
 
             -- We say we're valid if neither of the following
             -- have occurred
-            txValid <= '1'
+            txValid <= '1';
 
             --Other wise first check if the ram became empty
             -- last I/O operation
