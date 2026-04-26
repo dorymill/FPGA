@@ -152,7 +152,7 @@ architecture RTL of AXIS_RAM is
                     -- This conditional protects from
                     -- overwriting the last address when
                     -- we're full and double writing two addresses.
-                    if count /= ramDepth - 1 and RX_VALID = '1'  then    
+                    if RX_VALID = '1'  then    
                         ram(head) <= RX_DATA;                            
                     end if;                                              
 

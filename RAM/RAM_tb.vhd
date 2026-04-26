@@ -123,7 +123,7 @@ architecture AXIS_RAM_SIM of TestBench is
             wait for  100*tClk;
 
             -- Write in a bunch of data
-            for idx in 0 to 511 loop
+            for idx in 0 to 513 loop
 
                 dataVal <= idx;
 
@@ -140,8 +140,48 @@ architecture AXIS_RAM_SIM of TestBench is
                 wait for  1000.5*tClk;
             end loop;
 
-            -- Read it all out
+            wait for 10000*tClk;
 
+            -- Read it all out
+            for idx in 0 to 512 loop
+
+                wait for  2*tClk;
+
+                if txValid = '1' then
+                    txReady <= '1';
+                end if;
+
+                wait for  0.5*tClk;
+
+                txReady <= '0';
+
+                wait for  1000.5*tClk;
+            end loop;
+
+            wait for 10000*tClk;
+
+            -- FizzBuz R/W
+            for idx in 0 to 512 loop
+
+                dataVal <= idx;
+
+                wait for 0.5*tClk;
+
+                if idx mod 3 = 0 and idx mod 5 = 0 then
+                    txReady <= '1';
+                    rxValid <= '1';
+                elsif idx mod 3 = 0 then
+                    rxValid <= '1';
+                elsif idx mod 5 = 0 then
+                    rxValid <= '1';
+                else
+                    txReady <= '0';
+                    rxValid <= '0';
+                end if;
+
+                wait for  0.5*tClk;
+
+            end loop;
 
             DONE <= TRUE;
             wait;
