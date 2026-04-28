@@ -23,7 +23,7 @@ architecture COS_ROM_SIM of TestBench is
     component COS_ROM is
         generic ( -- Constants
         
-            romWidth  : natural;         -- Width in bits of the ROM bus
+            romWidth  : natural;          -- Width in bits of the ROM bus
             addrWidth : natural := 12;    -- Size of the address (2**N - 1 range)
             romDepth  : natural := 2**12  -- Number of romWidth "slots"
         

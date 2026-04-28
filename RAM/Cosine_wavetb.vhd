@@ -23,7 +23,7 @@ architecture WAVE_SIM of TestBench is
     component COS_ROM is
         generic ( -- Constants
         
-            romWidth  : natural;         -- Width in bits of the ROM bus
+            romWidth  : natural;          -- Width in bits of the ROM bus
             addrWidth : natural := 12;    -- Size of the address (2**N - 1 range)
             romDepth  : natural := 2**12  -- Number of romWidth "slots"
         
@@ -51,7 +51,7 @@ architecture WAVE_SIM of TestBench is
 
     -- Wave parameters
     constant sampleRate : integer := 96000;
-    constant frequency  : integer := 400;
+    constant frequency  : integer := 100;
     -- This is the phase increment that determines how often we need to sample the cosine table
     -- to generate a wave at a desired frequency and sample rate.
     constant phaseIncr  : std_logic_vector(simAddrWidth - 1 downto 0) := std_logic_vector(to_unsigned(frequency*simDepth/sampleRate, simAddrWidth));

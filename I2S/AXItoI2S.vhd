@@ -16,7 +16,7 @@ use IEEE.STD_LOGIC_1164.all;
 use IEEE.numeric_std.all;
 
 ------------------------------------------------
-entity I2S is
+entity AXIToI2S is
 ------------------------------------------------
 
     generic ( -- Constants 
@@ -30,11 +30,12 @@ entity I2S is
 
     port ( -- Physical IO defined in XDC file
 
+
         ENABLE   : in std_logic; -- Reset
         MCLK     : in std_logic; -- Master Clock
-        VALID    : in std_logic; -- Data Valid Signal
 
-        DIN1     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
+        -- I2S Input Data Words
+        DIN1        : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
         -- DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
         -- DIN3     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
         -- DIN4     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
@@ -44,16 +45,16 @@ entity I2S is
         -- PHONE3   : out std_logic; -- Phone 3 bit output
         -- PHONE4   : out std_logic; -- Phone 4 bit output
         
-        LRCLK    : out std_logic; -- Frame Sync Clock
-        BCLK     : out std_logic; -- Bit Sync Clock
-        READY    : out std_logic -- Data Ready Signal
+        LRCLK    : in std_logic; -- Frame Sync Clock
+        BCLK     : in std_logic; -- Bit Sync Clock
+        READY    : out std_logic  -- Rx Data Ready Signal
 
     );
 
-end entity I2S;
+end entity AXIToI2S;
 
 ------------------------------------------------
-architecture RTL of I2S is
+architecture RTL of AXIToI2S is
 ------------------------------------------------
 
     -- Constants
@@ -61,10 +62,10 @@ architecture RTL of I2S is
     constant bitClkCntMax : integer := (mclkFreq / (fsClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
     constant bitCntMax    : integer := bitWidth - 1;                                -- Data width
     
+    type EDGE_TYPE is (RISING, FALLING);
+
     -- Signals
     -- Counters
-    signal fsClkCntr  : integer := 0;  -- Frame Sync Clock Cycle Counter
-    signal bitClkCntr : integer := 0; -- Bit Sync CLock Cycle Counter
     signal bitCntr    : integer := 0; -- Clocked bits counter
 
     -- Inputs
@@ -73,125 +74,126 @@ architecture RTL of I2S is
     -- signal ph2inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
     -- signal ph3inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
     -- signal ph4inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
-
-    signal validSig : std_logic := '1'; -- Data Valid Signal
+    signal fsClk     : std_logic := '0';     -- Frame Sync Clock output
+    signal bitClk    : std_logic := '0';     -- Bit Sync Clock output
+    signal readySig  : std_logic := '1';     -- Data Ready Signal
+    signal bitTransition : std_logic := '0'; -- Bit Clock Shift Signal
+    signal bitFall       : std_logic := '0'; -- Bit Fall Signal
 
     -- Outputs
-    signal fsClk     : std_logic := '0'; -- Frame Sync Clock output
-    signal bitClk    : std_logic := '0'; -- Bit Sync Clock output
-    signal readySig  : std_logic := '1'; -- Data Ready Signal
     signal d1Out     : std_logic := '0'; -- Phone 1 bit output
 
     -- Maintenance
-    signal d1ShiftReg : std_logic_vector(2*bitWidth - 1 downto 0) := (others => '0'); -- Phone 1 Shift Register
+    signal d1ShiftReg  : std_logic_vector(2*bitWidth - 1 downto 0) := (others => '0'); -- Phone 1 Shift Register
+    signal lrclkLast  : std_logic := '0'; -- LRCLK edge detection signal
+    signal bitClkLast : std_logic := '0'; -- BCLK edge detection signal
+    
+    procedure edgeDetect (
+        signal mclk    : in std_logic;
+        signal enable  : in std_logic;
+        signal sig     : in std_logic;
+        signal sigLast : inout std_logic;
+        signal ready   : inout std_logic;
+        constant edge  : in EDGE_TYPE
 
+    ) is
+        begin
+            if(rising_edge(mclk)) then
+                if(enable = '1') then
+                    -- Procs have a clock cycle delay, which
+                    -- we can use to set a flag for the last state
+                    -- to detect a falling edge, and trigger
+                    -- a data request.
+                    sigLast <= sig;
+
+                    -- Falling edge detect If the current edge
+                    -- is low, and the prior as determined by
+                    -- above is high, we have fell, thus
+                    -- drive the line for the next sample.
+                    if sigLast = '1' and sig = '0' then
+                        ready <= '1';
+                    else
+                        ready <= '0';
+                    end if;
+                end if;
+            end if;
+        end procedure;
 
     begin -- Concurrent Statements & Component Instantiation
 
         -- Physical Connections to variables
-        -- Clocks
-        LRCLK <= fsClk;   -- Connect Frame Sync
-        BCLK   <= bitClk;  -- Connect Bit Sync
 
         -- Data Validation
         READY    <= readySig;  -- Connect Data Ready
-        validSig <= VALID;     -- Connect Data Valid
+        fsClk    <= LRCLK;
+        bitClk   <= BCLK;
 
         -- Data Inputs
         en      <= ENABLE;        -- Connect Enable
-        d1InReg <= DIN1;  -- Connect Phone 1 Data Input
         -- ph2inSig <= DIN2;  -- Connect Phone 2 Data Input
         -- ph3inSig <= DIN3;  -- Connect Phone 3 Data Input
         -- ph4inSig <= DIN4;  -- Connect Phone 4 Data Input
 
-        -- Data Outputs
-        PHONE1 <= d1Out;  -- Connect Phone 1 bit output
 
         ------------------------------------------------
-        FSCLK_PROC: process(MCLK)  -- Frame Sync Clock
+        DOUT_PROC: process(MCLK)  -- Data Out Clocking
         ------------------------------------------------
         begin
             if(rising_edge(MCLK)) then
                 if(ENABLE = '1') then
-                -- Transition at clock rise
-                    if (fsClkCntr = fsClkCntMax) then
-                        fsClk <= not fsClk;
-                        fsClkCntr <= 0;
-                    else
-                        fsClkCntr <= fsClkCntr + 1;
+                    -- Justification can be change here or by procedure
+                    if bitCntr = 0 then
+                        PHONE1 <= '0';
+                    elsif bitTransition = '1' then
+                        PHONE1 <= d1InReg(bitCntr);
                     end if;
-                else
-                    fsClk <= '0';
                 end if;
+
             end if;
-        end process FSCLK_PROC;
+
+        end process DOUT_PROC;
 
         ------------------------------------------------
-        BITSYNC_PROC: process(MCLK)  -- Bit Sync Clock
+        DIN_PROC: process(MCLK)  -- Data In Clocking
         ------------------------------------------------
         begin
             if(rising_edge(MCLK)) then
                 if(ENABLE = '1') then
-                -- Transition fsClk Rise
-                    if (bitClkCntr = bitClkCntMax) then
-                        bitClk <= not bitClk;
-                        bitClkCntr <= 0;
-                    else
-                        bitClkCntr <= bitClkCntr + 1;
+                    if readySig = '1' then
+                        d1InReg <= DIN1;
                     end if;
-                else
-                    bitClk <= '0';
                 end if;
             end if;
-        end process BITSYNC_PROC;
+
+        end process DIN_PROC;
+
 
         ------------------------------------------------
-        DATA_PROC: process(MCLK)  -- Data Clocking
+        -- World Clock falling edge detection which will
+        -- drive the AXIS ready signal to switch samples
+        -- from the data source.
         ------------------------------------------------
+        LRFALLDETECT : edgeDetect (MCLK, ENABLE, lrClk, lrClkLast, readySig, FALLING);
+
+        ------------------------------------------------
+        -- These processes will drive the bit counting
+        -- mechanism, which will drive the serial 
+        -- data clocking mechanism.
+        ------------------------------------------------
+        BITFALLDETECT: edgeDetect(MCLK, ENABLE, BCLK, bitClkLast, bitTransition, FALLING);
+        BITCOUNT_PROCESS: process(MCLK)
         begin
-            if(rising_edge(MCLK)) then
-                if(ENABLE = '1') then
-                    -- We change data on falling bit clock edges
-                    if(bitClk = '1' and bitClkCntr = bitClkCntMax) then
-                        -- Shift data out
-                        d1ShiftReg <= d1ShiftReg(2*bitWidth - 2 downto 0) & '0';
-                        d1Out <= d1ShiftReg(2*bitWidth - 1);
-
-                        -- Increment bit counter
-                        if(bitCntr = 2*bitWidth -1) then
-                            bitCntr <= 0;
-                        else
-                            bitCntr <= bitCntr + 1;
-                        end if;
-
-                    end if;
-
-                    -- Reload shift register after all bits are clocked out
-                    if(readySig = '1' and validSig = '1') then
-                        d1ShiftReg <= d1InReg & d1InReg;
-                    end if;
-
-                end if;
-
-            end if;
-
-        end process DATA_PROC;
-
-        ------------------------------------------------
-        READY_PROC: process(MCLK)  -- Ready Signal Proc
-        ------------------------------------------------
-        begin
-            if(rising_edge(MCLK)) then
-                if(ENABLE = '1') then
-                    -- Drive ready on the falling edge after the last bit is clocked out
-                    if(bitClk = '1' and bitClkCntr = bitClkCntMax and bitCntr = 0) then
-                        readySig <= '1';
-                    else
-                        readySig <= '0';
+            if rising_edge(MCLK) then
+                if ENABLE = '1' then
+                    if bitTransition = '1' and bitCntr /= 0 then
+                        bitCntr <= bitCntr - 1;
+                    elsif bitTransition = '1' and bitCntr = 0 then
+                        bitCntr <= bitWidth - 1;
                     end if;
                 end if;
             end if;
+        end process;
 
-        end process READY_PROC;
+
 
     end architecture RTL;
