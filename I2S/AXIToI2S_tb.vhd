@@ -20,8 +20,8 @@ architecture SIM of TestBench is
             MCLK   : in std_logic;
             DIN1   : in std_logic_vector(bitWidth - 1 downto 0);
             PHONE1 : out std_logic;
-            LRCLK  : in std_logic;
-            BCLK   : in std_logic;
+            LRCLK  : out std_logic;
+            BCLK   : out std_logic;
             READY  : out std_logic
         );
     end component;
@@ -76,29 +76,6 @@ begin
         wait;
     end process clk_proc;
 
-    ------------------------------------------------
-    -- LRCLK generation (96 kHz)
-    ------------------------------------------------
-    lrclk_proc : process
-    begin
-        while not DONE loop
-            wait for 160 * TCLK;
-            lrclkTb <= not lrclkTb;
-        end loop;
-        wait;
-    end process lrclk_proc;
-
-    ------------------------------------------------
-    -- BCLK generation (3.072 MHz)
-    ------------------------------------------------
-    bclk_proc : process
-    begin
-        while not DONE loop
-            wait for 5 * TCLK;
-            bclkTb <= not bclkTb;
-        end loop;
-        wait;
-    end process bclk_proc;
 
     ------------------------------------------------
     -- Increment DIN1 on each READY pulse

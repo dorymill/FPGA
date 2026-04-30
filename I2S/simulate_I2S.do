@@ -11,26 +11,19 @@ vsim work.TestBench
 # Set the waves
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate /testbench/UUT/ENABLE
 add wave -noupdate /testbench/UUT/MCLK
-add wave -noupdate /testbench/UUT/DIN1
-add wave -noupdate /testbench/UUT/PHONE1
-add wave -noupdate /testbench/UUT/LRCLK
 add wave -noupdate /testbench/UUT/BCLK
-add wave -noupdate /testbench/UUT/READY
-add wave -noupdate /testbench/UUT/fsClkCntr
-add wave -noupdate /testbench/UUT/bitClkCntr
+add wave -noupdate /testbench/UUT/LRCLK
+add wave -radix unsigned -noupdate /testbench/UUT/d1InReg
 add wave -noupdate /testbench/UUT/bitCntr
-add wave -noupdate /testbench/UUT/en
-add wave -noupdate /testbench/UUT/d1InReg
-add wave -noupdate /testbench/UUT/fsClk
-add wave -noupdate /testbench/UUT/bitClk
-add wave -noupdate /testbench/UUT/readySig
+add wave -radix unsigned -noupdate /testbench/UUT/DIN1
+add wave -noupdate /testbench/UUT/PHONE1
+add wave -noupdate /testbench/UUT/READY
 add wave -noupdate /testbench/UUT/bitTransition
-add wave -noupdate /testbench/UUT/d1Out
-add wave -noupdate /testbench/UUT/d1ShiftReg
-add wave -noupdate /testbench/UUT/lrclkLast
-add wave -noupdate /testbench/UUT/bitClkLast
+
+
+
+
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {4999999336 ps} 0}
 quietly wave cursor active 1

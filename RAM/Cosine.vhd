@@ -66,7 +66,7 @@ architecture RTL of COS_ROM is
         
         variable data : rom_type;
         variable angle : real;
-        variable cVal  :real;
+        variable cVal  : real;
         
         begin
             -- Iteratively fill the data array using
