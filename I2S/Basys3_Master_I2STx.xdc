@@ -1,4 +1,4 @@
-## This file is a general .xdc for the Basys3 rev B board
+0000## This file is a general .xdc for the Basys3 rev B board
 ## To use it in a project:
 ## - uncomment the lines corresponding to used pins
 ## - rename the used ports (in each line, after get_ports) according to the top level signal names in the project
@@ -11,12 +11,12 @@ set_property PACKAGE_PIN W5 [get_ports MCLK]
 # Switches
 set_property PACKAGE_PIN V17 [get_ports {ENABLE}]					
 	set_property IOSTANDARD LVCMOS33 [get_ports {ENABLE}]
-set_property PACKAGE_PIN V16 [get_ports {MODE}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {MODE}]
-#set_property PACKAGE_PIN W16 [get_ports {sw[2]}]					
-	#set_property IOSTANDARD LVCMOS33 [get_ports {sw[2]}]
-#set_property PACKAGE_PIN W17 [get_ports {sw[3]}]					
-	#set_property IOSTANDARD LVCMOS33 [get_ports {sw[3]}]
+#set_property PACKAGE_PIN V16 [get_ports {LRCLK}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {BCLK}]
+#set_property PACKAGE_PIN W16 [get_ports {BCLK}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {BCLK}]
+#set_property PACKAGE_PIN W17 [get_ports {PHONE1}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE1}]
 #set_property PACKAGE_PIN W15 [get_ports {sw[4]}]					
 	#set_property IOSTANDARD LVCMOS33 [get_ports {sw[4]}]
 #set_property PACKAGE_PIN V15 [get_ports {sw[5]}]					
@@ -123,14 +123,14 @@ set_property PACKAGE_PIN U17 [get_ports BTN[4]]
 
 ##Pmod Header JA
 ##Sch name = JA1
-#set_property PACKAGE_PIN J1 [get_ports {JA[0]}]					
-	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[0]}]
-##Sch name = JA2
-#set_property PACKAGE_PIN L2 [get_ports {JA[1]}]					
-	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[1]}]
-##Sch name = JA3
-#set_property PACKAGE_PIN J2 [get_ports {JA[2]}]					
-	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[2]}]
+set_property PACKAGE_PIN J1 [get_ports {LRCLK}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {LRCLK}]
+#Sch name = JA2
+set_property PACKAGE_PIN L2 [get_ports {BCLK}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {BCLK}]
+#Sch name = JA3
+set_property PACKAGE_PIN J2 [get_ports {PHONE1}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE1}]
 ##Sch name = JA4
 #set_property PACKAGE_PIN G2 [get_ports {JA[3]}]					
 	#set_property IOSTANDARD LVCMOS33 [get_ports {JA[3]}]
@@ -151,45 +151,45 @@ set_property PACKAGE_PIN U17 [get_ports BTN[4]]
 
 ##Pmod Header JB
 #Sch name = JB1
-set_property PACKAGE_PIN A14 [get_ports {LRCLK}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {LRCLK}]
-#Sch name = JB2
-set_property PACKAGE_PIN A16 [get_ports {BCLK}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {BCLK}]
-#Sch name = JB3
-set_property PACKAGE_PIN B15 [get_ports {PHONE1}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE1}]
-#Sch name = JB4
-set_property PACKAGE_PIN B16 [get_ports {PHONE2}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE2}]
-#Sch name = JB7
-set_property PACKAGE_PIN A15 [get_ports {PHONE3}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE3}]
-#Sch name = JB8
-set_property PACKAGE_PIN A17 [get_ports {PHONE4}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE4}]
-##Sch name = JB9
-set_property PACKAGE_PIN C15 [get_ports {VALID}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {VALID}]
-#Sch name = JB10 
-set_property PACKAGE_PIN C16 [get_ports {READY}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {READY}]
+#set_property PACKAGE_PIN A14 [get_ports {LRCLK}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {LRCLK}]
+##Sch name = JB2
+#set_property PACKAGE_PIN A16 [get_ports {BCLK}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {BCLK}]
+##Sch name = JB3
+#set_property PACKAGE_PIN B15 [get_ports {PHONE1}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE1}]
+##Sch name = JB4
+#set_property PACKAGE_PIN B16 [get_ports {PHONE2}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE2}]
+##Sch name = JB7
+#set_property PACKAGE_PIN A15 [get_ports {PHONE3}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE3}]
+##Sch name = JB8
+#set_property PACKAGE_PIN A17 [get_ports {PHONE4}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {PHONE4}]
+###Sch name = JB9
+#set_property PACKAGE_PIN C15 [get_ports {VALID}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {VALID}]
+##Sch name = JB10 
+#set_property PACKAGE_PIN C16 [get_ports {READY}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {READY}]
  
 
 
 ##Pmod Header JC
 ##Sch name = JC1
-set_property PACKAGE_PIN K17 [get_ports {DIN1}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {DIN1}]
-#Sch name = JC2
-set_property PACKAGE_PIN M18 [get_ports {DIN2}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {DIN2}]
-#Sch name = JC3
-set_property PACKAGE_PIN N17 [get_ports {DIN3}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {DIN3}]
-#Sch name = JC4
-set_property PACKAGE_PIN P18 [get_ports {DIN4}]					
-	set_property IOSTANDARD LVCMOS33 [get_ports {DIN4}]
+#set_property PACKAGE_PIN K17 [get_ports {DIN1}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {DIN1}]
+##Sch name = JC2
+#set_property PACKAGE_PIN M18 [get_ports {DIN2}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {DIN2}]
+##Sch name = JC3
+#set_property PACKAGE_PIN N17 [get_ports {DIN3}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {DIN3}]
+##Sch name = JC4
+#set_property PACKAGE_PIN P18 [get_ports {DIN4}]					
+#	set_property IOSTANDARD LVCMOS33 [get_ports {DIN4}]
 #Sch name = JC7
 #set_property PACKAGE_PIN L17 [get_ports {JC[4]}]					
 	#set_property IOSTANDARD LVCMOS33 [get_ports {JC[4]}]

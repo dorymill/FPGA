@@ -72,19 +72,16 @@ architecture RTL of AXIToI2S is
 
     -- Inputs
     signal en      : std_logic; -- Enable
-
-    -- signal ph2inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
-    -- signal ph3inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
-    -- signal ph4inSig : std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
-    signal fsClk         : std_logic := '0'; -- Frame Sync Clock output
-    signal bitClk        : std_logic := '0'; -- Bit Sync Clock output
-    signal readySig      : std_logic := '1'; -- Data Ready Signal
-    signal bitTransition : std_logic := '0'; -- Bit Clock Shift Signal
-
-    -- Outputs
     signal d1InReg : std_logic_vector(bitWidth - 1 downto 0) := (others => '0'); -- Phone 1 Serial Output
 
+    signal bitTransition : std_logic := '0'; -- Bit Clock Shift Signal
+    
+    -- Outputs
+    signal fsClk         : std_logic := '0'; -- Frame Sync Clock output
+    signal bitClk        : std_logic := '0'; -- Bit Sync Clock output
+    
     -- Maintenance
+    signal readySig   : std_logic := '1'; -- Data Ready Signal
     signal fsClkLast  : std_logic := '0'; -- LRCLK edge detection signal
     signal bitClkLast : std_logic := '0'; -- BCLK edge detection signal
     
@@ -121,20 +118,15 @@ architecture RTL of AXIToI2S is
 
     begin -- Concurrent Statements & Component Instantiation
 
-        -- Physical Connections to variables
-
+        -- Clocks
         LRCLK <= fsClk;   -- Connect Frame Sync
         BCLK  <= bitClk;  -- Connect Bit Clock
        
         -- Data Validation
         READY    <= readySig;  -- Connect Data Ready
-        -- Clocks
 
         -- Data Inputs
         en      <= ENABLE;        -- Connect Enable
-        -- ph2inSig <= DIN2;  -- Connect Phone 2 Data Input
-        -- ph3inSig <= DIN3;  -- Connect Phone 3 Data Input
-        -- ph4inSig <= DIN4;  -- Connect Phone 4 Data Input
 
         -- Data Outputs
         PHONE1 <= d1InReg(bitCntr);
@@ -228,7 +220,5 @@ architecture RTL of AXIToI2S is
                 end if;
             end if;
         end process;
-
-
 
     end architecture RTL;
