@@ -32,7 +32,7 @@ entity SevSeg is
         MODE   : in std_logic; -- Mode Switch (Display Data Drive)
 
         AN     : out std_logic_vector(nAnode -1 downto 0); 
-        SEG    : out std_logic_vector(nSeg - 1 downto 0)
+        SEG    : out std_logic_vector(0 to nSeg - 1)
 
     );
 
@@ -62,7 +62,7 @@ architecture RTL of SevSeg is
     );
 
     -- Array of characters to be displayed
-    type char_array is array (0 to nAnode - 1) of char_type;
+    type char_array is array (nAnode -1 downto 0) of char_type;
     signal characters : char_array;
 
     
@@ -134,7 +134,7 @@ architecture RTL of SevSeg is
             when CHAR_L  => SEG <= "1110001"; -- 'L'
             when CHAR_N  => SEG <= "1101010"; -- 'n'
             when CHAR_O  => SEG <= "0000001"; -- 'O'
-            when CHAR_P  => SEG <= "0001100"; -- 'P'
+            when CHAR_P  => SEG <= "0011000"; -- 'P'
             when CHAR_R  => SEG <= "1111010"; -- 'r'
             when CHAR_S  => SEG <= "0100100"; -- 'S'
             when CHAR_T  => SEG <= "1110000"; -- 't'

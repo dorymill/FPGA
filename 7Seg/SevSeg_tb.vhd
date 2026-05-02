@@ -24,7 +24,7 @@ architecture SIM of TestBench is
             MODE   : in std_logic; -- Mode Switch (Display Data Drive)
 
             AN     : out std_logic_vector(nAnode -1 downto 0); 
-            SEG    : out std_logic_vector(nSeg - 1 downto 0)
+            SEG    : out std_logic_vector(0 to nSeg - 1)
 
         );
     end component;
@@ -38,7 +38,7 @@ architecture SIM of TestBench is
     signal mclkTb   : std_logic := '0';
     signal modeTb   : std_logic := '0';
     signal anTb     : std_logic_vector(nAnode -1 downto 0) := (others => '0');
-    signal segTb    : std_logic_vector(nSeg - 1 downto 0) := (others => '1');
+    signal segTb    : std_logic_vector(0 to nSeg - 1) := (others => '1');
 
     signal DONE     : boolean := FALSE;
 
