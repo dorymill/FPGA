@@ -35,15 +35,11 @@ entity AXIToI2S is
         MCLK     : in std_logic; -- Master Clock
 
         -- I2S Input Data Words
-        DIN1        : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
-        -- DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
-        -- DIN3     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 3 Data Input
-        -- DIN4     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 4 Data Input
+        DIN1     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 1 Data Input
+        DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
 
         PHONE1   : out std_logic; -- Phone 1 bit output
-        -- PHONE2   : out std_logic; -- Phone 2 bit output
-        -- PHONE3   : out std_logic; -- Phone 3 bit output
-        -- PHONE4   : out std_logic; -- Phone 4 bit output
+        PHONE2   : out std_logic; -- Phone 2 bit output
         
         LRCLK    : out std_logic; -- Frame Sync Clock
         BCLK     : out std_logic; -- Bit Sync Clock
@@ -73,6 +69,7 @@ architecture RTL of AXIToI2S is
     -- Inputs
     signal en      : std_logic; -- Enable
     signal d1InReg : std_logic_vector(bitWidth - 1 downto 0) := (others => '0'); -- Phone 1 Serial Output
+    signal d2InReg : std_logic_vector(bitWidth - 1 downto 0) := (others => '0'); -- Phone 2 Serial Output
 
     signal bitTransition : std_logic := '0'; -- Bit Clock Shift Signal
     
@@ -130,6 +127,7 @@ architecture RTL of AXIToI2S is
 
         -- Data Outputs
         PHONE1 <= d1InReg(bitCntr);
+        PHONE2 <= d2InReg(bitCntr);
 
         ------------------------------------------------
         FSCLK_PROC: process(MCLK)  -- Frame Sync Clock
@@ -177,6 +175,7 @@ architecture RTL of AXIToI2S is
                 if(ENABLE = '1') then
                     if readySig = '1' then
                         d1InReg <= DIN1;
+                        d2InReg <= DIN2;
                     end if;
                 end if;
             end if;
@@ -202,6 +201,7 @@ architecture RTL of AXIToI2S is
                 end if;
             end if;
         end process;
+        
         ------------------------------------------------
         -- These processes will drive the bit counting
         -- mechanism, which will drive the serial 

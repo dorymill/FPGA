@@ -9,3 +9,7 @@ I2S/modelsim.ini
 7Seg/transcript
 7Seg/vsim.wlf
 7Seg/wlftt71hm2
+Applications/EndFire/work
+Applications/EndFire/*.wlf
+Applications/EndFire/transcript
+Applications/EndFire/modelsim.ini

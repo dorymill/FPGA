@@ -66,7 +66,7 @@ architecture RTL of Top is
     component COS_ROM
         generic ( -- Constants
     
-        romWidth  : natural;         -- Width in bits of the ROM bus
+        romWidth  : natural;          -- Width in bits of the ROM bus
         addrWidth : natural := 12;    -- Size of the address (2**N - 1 range)
         romDepth  : natural := 2**12  -- Number of romWidth "slots"
     
@@ -106,7 +106,7 @@ architecture RTL of Top is
             
             LRCLK    : out std_logic; -- Frame Sync Clock
             BCLK     : out std_logic; -- Bit Sync Clock
-            READY    : out std_logic -- Data Ready Signal
+            READY    : out std_logic  -- Data Ready Signal
 
         );
 

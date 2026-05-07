@@ -30,8 +30,10 @@ entity COS_ROM is
     
         CLK : in std_logic; -- Master Clock
 
-        ADDR : in std_logic_vector(addrWidth - 1 downto 0); -- Address in ROM
-        DATA : out std_logic_vector(romWidth - 1 downto 0) -- Data out bus
+        ADDR1 : in std_logic_vector(addrWidth - 1 downto 0); -- Address 1 in ROM
+        ADDR2 : in std_logic_vector(addrWidth - 1 downto 0); -- Address 2 in ROM
+        DATA1 : out std_logic_vector(romWidth - 1 downto 0); -- Data out bus
+        DATA2 : out std_logic_vector(romWidth - 1 downto 0)  -- Data out bus
     
     );
 
@@ -51,7 +53,8 @@ architecture RTL of COS_ROM is
 
     signal rom : rom_type;
 
-    signal dataOut : std_logic_vector(romWidth -1 downto 0);
+    signal data1Out : std_logic_vector(romWidth -1 downto 0);
+    signal data2Out : std_logic_vector(romWidth -1 downto 0);
 
 
     ------------------------------------------------
@@ -78,6 +81,7 @@ architecture RTL of COS_ROM is
 
                 -- Scale the sucker.
                 data(idx) := std_logic_vector(to_signed(integer(cVal*real((2**(romWidth-1) - 1))), romWidth));
+                
 
             end loop;
             
@@ -93,7 +97,8 @@ architecture RTL of COS_ROM is
         ------------------------------------------------
         -- Concurrent Statements
         ------------------------------------------------
-        DATA <= dataOut;
+        DATA1 <= data1Out;
+        DATA2 <= data2Out;
 
         ------------------------------------------------
         -- Processes
@@ -105,7 +110,8 @@ architecture RTL of COS_ROM is
         begin
             if rising_edge(CLK) then
 
-                dataOut <= std_logic_vector(cos_table(to_integer(unsigned(ADDR))));
+                data1Out <= std_logic_vector(cos_table(to_integer(unsigned(ADDR1))));
+                data2Out <= std_logic_vector(cos_table(to_integer(unsigned(ADDR2))));
 
             end if;
 

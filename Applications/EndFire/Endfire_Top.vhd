@@ -1,0 +1,296 @@
+------------------------------------------------
+-- The purpose of this project is to create
+-- a four element array that is capable
+-- of switching in and out of Endfire mode.
+-- 
+-- Quadspi: S25FL032
+-- Author: dmmill
+
+------------------------------------------------
+-- Libraries
+library IEEE;
+
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.numeric_std.all;
+
+------------------------------------------------
+entity EndfireTop is
+------------------------------------------------
+
+    generic ( -- Constants
+    
+        mClkFreq  : integer := 24576000;  -- Master Clock Frequency
+        fsClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
+        bitWidth  : integer := 16;        -- Audio Data Size
+        nChan     : integer := 2;         -- Number of Channels
+        nSeg    : integer := 7;           -- Number of Segements
+        nAnode  : integer := 4            -- Number of Displays
+    
+    );
+
+    port ( -- External IO
+        
+        MCLK     : in std_logic; -- Master Clock
+        ENABLE   : in std_logic; -- Reset
+        MODE     : in std_logic; -- Mode Selection
+
+        PHONE1   : out std_logic; -- Phone 1 bit output
+        PHONE2   : out std_logic; -- Phone 2 bit output
+        
+        LRCLK    : out std_logic; -- Frame Sync Clock
+        BCLK     : out std_logic; -- Bit Sync Clock
+
+        LED      : out std_logic_vector(15 downto 0);         -- LED Output
+        AN       : out std_logic_vector(nAnode - 1 downto 0); -- Anode Output
+        SEG      : out std_logic_vector(0 to nSeg - 1)        -- Segment Output
+
+    );
+
+end entity EndfireTop;
+
+------------------------------------------------
+architecture RTL of EndfireTop is
+------------------------------------------------
+
+    ------------------------------------------------
+    -- Constants, Types, and Signals
+    ------------------------------------------------
+    constant addrWidth  : integer := 12;
+    constant romDepth   : integer := 2**addrWidth;
+    constant updateRate : integer := 96000;
+
+    signal i2sClk      : std_logic := '0';
+    signal ready       : std_logic := '0';
+
+    -- I2S Input Data Registers
+    signal d1InReg : std_logic_vector(bitWidth - 1 downto 0);
+    signal d2InReg : std_logic_vector(bitWidth - 1 downto 0);
+
+    -- COS ROM Address Registers
+    signal addr1  : std_logic_vector(addrWidth - 1 downto 0) := (others => '0');
+    signal addr2  : std_logic_vector(addrWidth - 1 downto 0) := (others => '0');
+
+    -- LED Drive signal
+    signal ledOut : std_logic_vector(bitWidth - 1 downto 0) := (others => '0');
+
+    -- Frequency Generation Parameters
+    constant toneFreq   : integer := 400;
+    constant sampleRate : integer := fsClkFreq;  -- 96 kHz
+    constant phaseIncr : unsigned(addrWidth - 1 downto 0) :=
+        to_unsigned(((toneFreq * (2**addrWidth)) + sampleRate/2) / sampleRate, addrWidth);
+
+    constant endFireOffSet : unsigned(addrWidth - 1 downto 0) := to_unsigned(romDepth / 2, addrWidth);
+
+    signal addr1Accumulator : unsigned(addrWidth - 1 downto 0) := (others => '0');
+    signal addr2Accumulator : unsigned(addrWidth - 1 downto 0) := endFireOffSet;   -- This starts us off always 180 degrees out
+
+    ------------------------------------------------
+    -- Component Declarations
+    ------------------------------------------------
+
+    -- PLL to provide proper clock
+    component clk_wiz_0
+        port (
+            CLK_IN1    : in  std_logic;
+            CLK_OUT1   : out std_logic
+        );
+    end component;
+
+    -- Cosine Table
+    component COS_ROM
+        generic ( -- Constants
+    
+        romWidth  : natural; -- Width in bits of the ROM bus
+        addrWidth : natural; -- Size of the address (2**N - 1 range)
+        romDepth  : natural  -- Number of romWidth "slots"
+    
+        );
+
+        port ( -- I/O
+        
+            CLK : in std_logic; -- Master Clock
+
+            ADDR1 : in std_logic_vector(addrWidth - 1 downto 0); -- Address 1 in ROM
+            ADDR2 : in std_logic_vector(addrWidth - 1 downto 0); -- Address 2 in ROM
+            DATA1 : out std_logic_vector(romWidth - 1 downto 0); -- Data out bus
+            DATA2 : out std_logic_vector(romWidth - 1 downto 0)  -- Data out bus
+            
+        );
+    end component;
+    
+    -- I2S Component
+    component AXItoI2S
+        generic ( -- Constants 
+
+            mClkFreq  : integer;  -- Master Clock Frequency
+            fsClkFreq : integer;  -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
+            bitWidth  : integer;  -- Audio Data Size
+            nChan     : integer  -- Number of Channels
+
+        );
+
+        port ( -- Physical IO defined in XDC file
+   
+            ENABLE   : in std_logic; -- Reset
+            MCLK     : in std_logic; -- Master Clock
+
+            DIN1     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
+            DIN2     : in std_logic_vector(bitWidth - 1 downto 0); -- Phone 2 Data Input
+
+            PHONE1   : out std_logic; -- Phone 1 bit output
+            PHONE2   : out std_logic; -- Phone 2 bit output
+
+            
+            LRCLK    : out std_logic; -- Frame Sync Clock
+            BCLK     : out std_logic; -- Bit Sync Clock
+            READY    : out std_logic -- Data Ready Signal
+
+        );
+    end component;
+
+    component SevSeg is
+        generic ( -- Constants
+        
+            clkFreq : integer; -- Master Clock Frequency
+            nSeg    : integer; -- Number of Segements
+            nAnode  : integer  -- Number of Displays
+        
+        );
+
+        port ( -- External IO
+            
+            MCLK   : in std_logic; -- Master Clock
+            ENABLE : in std_logic; -- Enable/Reset Switch
+            MODE   : in std_logic; -- Mode Switch (Display Data Drive)
+
+            AN     : out std_logic_vector(nAnode -1 downto 0); 
+            SEG    : out std_logic_vector(0 to nSeg - 1)
+
+        );
+    end component;
+
+    ------------------------------------------------
+    -- Procedures and Functions
+    ------------------------------------------------
+    
+    begin
+        ------------------------------------------------
+        -- Concurrent Statements
+        ------------------------------------------------
+        ready <= READY;
+        addr1 <= std_logic_vector(addr1Accumulator);
+        addr2 <= std_logic_vector(addr2Accumulator) when MODE = '1' else std_logic_vector(addr1Accumulator);
+        LED <= ledOut;
+
+        ------------------------------------------------
+        -- Component Instantiation
+        ------------------------------------------------
+
+        -- Instantiate the PLL
+        PLL_inst : clk_wiz_0
+            port map (
+                CLK_IN1  => MCLK,
+                CLK_OUT1 => i2sclk
+            );
+
+        -- Instantiate the AXIS I2S Bridge
+        I2S_inst : AXItoI2S
+            generic map (
+                mClkFreq  => mClkFreq,
+                fsClkFreq => fsClkFreq,
+                bitWidth  => bitWidth,
+                nChan     => nChan
+
+            )
+
+            port map (
+                ENABLE   => ENABLE,
+                MCLK     => i2sclk,
+
+                DIN1  => d1InReg,
+                DIN2  => d2InReg,
+
+                PHONE1   => PHONE1,
+                PHONE2   => PHONE2,
+
+                LRCLK    => LRCLK,
+                BCLK     => BCLK,
+                READY    => ready
+            );
+
+        -- Instantiate COS ROM
+        COS_ROM_inst : COS_ROM
+            generic map ( -- Constants
+            
+                romWidth  => bitWidth,
+                addrWidth => addrWidth,
+                romDepth  => romDepth
+                
+            )
+
+            port map ( -- I/O
+            
+                CLK => i2sClk,
+
+                ADDR1 => addr1,
+                ADDR2 => addr2,
+                DATA1 => d1InReg,
+                DATA2 => d2InReg
+            );
+
+        -- Instantiate SevSeg Display
+        SEV_SEG_inst : SevSeg
+            generic map ( -- Constants
+            
+                clkFreq => mClkFreq,
+                nSeg    => nSeg,
+                nAnode  => nAnode
+            )
+
+            port map ( -- I/O
+            
+                MCLK   => i2sClk,
+                ENABLE => ENABLE,
+                MODE   => MODE,
+
+                AN     => AN,
+                SEG    => SEG
+            );
+
+
+        ------------------------------------------------
+        -- Processes
+        ------------------------------------------------
+
+        -- Process to acquire the cosine samples
+        ------------------------------------------------
+        WAVE_PROCESS : process(i2sclk)
+        ------------------------------------------------
+        begin
+            if rising_edge(i2sClk) then
+                if ready = '1' then
+                    addr1Accumulator <= addr1Accumulator + phaseIncr;
+                    addr2Accumulator <= addr2Accumulator + phaseIncr;
+                end if;
+            end if;
+        end process WAVE_PROCESS;
+
+
+        -- This process shall drive the LED's based
+        -- on data1 drive.
+        ------------------------------------------------
+        LED_STATUS_PROCESS : process(i2sclk)
+        ------------------------------------------------
+            variable ledCounter : natural := 0;
+        begin
+            if rising_edge(i2sclk) then
+                if ledCounter = 10*updateRate then
+                    LED <= d1InReg;
+                    ledCounter := 0;
+                else 
+                    ledCounter := ledCounter + 1;
+                end if;
+            end if;
+        end process;
+
+end architecture RTL;
