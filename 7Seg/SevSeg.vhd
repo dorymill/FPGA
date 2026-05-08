@@ -159,27 +159,25 @@ architecture RTL of SevSeg is
         ------------------------------------------------
         begin
             if rising_edge(MCLK) then
-                if ENABLE = '1' then
-                    if anCntr = 0 then
-                        anCntr <= sweepCntr - 1;
-                        anode <= (anode + 1) mod nAnode;
+                if anCntr = 0 then
+                    anCntr <= sweepCntr - 1;
+                    anode <= (anode + 1) mod nAnode;
 
-                    else
-                        anCntr <= anCntr - 1;
-                    end if;
-
-                    -- Clean Swap on Mode
-                    if MODE /= mode_z1 then
-                        anode <= 0;
-                    end if;
-                    
-                    -- Synchronously set the anode vector
-                    AN <= (others => '1');
-                    AN(anode) <= '0';
-
-                    mode_z1 <= MODE;
-
+                else
+                    anCntr <= anCntr - 1;
                 end if;
+
+                -- Clean Swap on Mode
+                if MODE /= mode_z1 then
+                    anode <= 0;
+                end if;
+                
+                -- Synchronously set the anode vector
+                AN <= (others => '1');
+                AN(anode) <= '0';
+
+                mode_z1 <= MODE;
+
             end if;
         end process;
 

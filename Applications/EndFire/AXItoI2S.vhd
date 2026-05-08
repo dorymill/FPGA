@@ -62,56 +62,25 @@ architecture RTL of AXIToI2S is
 
     -- Signals
     -- Counters
-    signal bitCntr    : integer := 0; -- Clocked bits counter
-    signal fsClkCntr  : integer := 0; -- Frame Sync Clock Cycle Counter
-    signal bitClkCntr : integer := 0; -- Bit Sync CLock Cycle Counter
+    signal bitCntr    : integer := bitCntMax; -- Clocked bits counter
+    signal fsClkCntr  : integer;              -- Frame Sync Clock Cycle Counter
+    signal bitClkCntr : integer;              -- Bit Sync CLock Cycle Counter
 
     -- Inputs
     signal en      : std_logic; -- Enable
     signal d1InReg : std_logic_vector(bitWidth - 1 downto 0) := (others => '0'); -- Phone 1 Serial Output
     signal d2InReg : std_logic_vector(bitWidth - 1 downto 0) := (others => '0'); -- Phone 2 Serial Output
 
-    signal bitTransition : std_logic := '0'; -- Bit Clock Shift Signal
+    signal bitTransition : std_logic; -- Bit Clock Shift Signal
     
     -- Outputs
-    signal fsClk         : std_logic := '0'; -- Frame Sync Clock output
-    signal bitClk        : std_logic := '0'; -- Bit Sync Clock output
+    signal fsClk         : std_logic; -- Frame Sync Clock output
+    signal bitClk        : std_logic; -- Bit Sync Clock output
     
     -- Maintenance
-    signal readySig   : std_logic := '1'; -- Data Ready Signal
-    signal fsClkLast  : std_logic := '0'; -- LRCLK edge detection signal
-    signal bitClkLast : std_logic := '0'; -- BCLK edge detection signal
+    signal readySig   : std_logic; -- Data Ready Signal
+    signal bitClkLast : std_logic; -- BCLK edge detection signal
     
-    procedure edgeDetect (
-        signal mclk    : in std_logic;
-        signal enable  : in std_logic;
-        signal sig     : in std_logic;
-        signal sigLast : inout std_logic;
-        signal ready   : inout std_logic;
-        constant edge  : in EDGE_TYPE
-
-    ) is
-        begin
-            if(rising_edge(mclk)) then
-                if(enable = '1') then
-                    -- Procs have a clock cycle delay, which
-                    -- we can use to set a flag for the last state
-                    -- to detect a falling edge, and trigger
-                    -- a data request.
-                    sigLast <= sig;
-
-                    -- Falling edge detect If the current edge
-                    -- is low, and the prior as determined by
-                    -- above is high, we have fell, thus
-                    -- drive the line for the next sample.
-                    if sigLast = '1' and sig = '0' then
-                        ready <= '1';
-                    else
-                        ready <= '0';
-                    end if;
-                end if;
-            end if;
-        end procedure;
 
     begin -- Concurrent Statements & Component Instantiation
 
@@ -143,7 +112,8 @@ architecture RTL of AXIToI2S is
                         fsClkCntr <= fsClkCntr + 1;
                     end if;
                 else
-                    fsClk <= '0';
+                    fsClkCntr <= 0;
+                    fsClk     <= '0';
                 end if;
             end if;
         end process FSCLK_PROC;
@@ -154,15 +124,25 @@ architecture RTL of AXIToI2S is
         begin
             if(rising_edge(MCLK)) then
                 if(ENABLE = '1') then
-                -- Transition fsClk Rise
+                    -- Transition BCLK fsClk Rise
                     if (bitClkCntr = bitClkCntMax) then
                         bitClk <= not bitClk;
                         bitClkCntr <= 0;
                     else
                         bitClkCntr <= bitClkCntr + 1;
                     end if;
+
+                    -- Request new data on the falling edge when we reset
+                    if (bitCntr = 0 and bitClk = '0' and fsClk = '0' and bitClkLast = '1') then
+                        readySig <= '1';
+                    else 
+                        readySig <= '0';
+                    end if;
+
                 else
-                    bitClk <= '0';
+                    bitClkCntr <=  0;
+                    bitClk     <= '0';
+                    readySig   <= '0';
                 end if;
             end if;
         end process BITSYNC_PROC;
@@ -177,46 +157,36 @@ architecture RTL of AXIToI2S is
                         d1InReg <= DIN1;
                         d2InReg <= DIN2;
                     end if;
+                else
+                    d1InReg <= (others => '0');
+                    d2InReg <= (others => '0');
                 end if;
             end if;
-
         end process DIN_PROC;
 
-
-        ------------------------------------------------
-        -- Data Request process which will
-        -- drive the AXIS ready signal to switch samples
-        -- from the data source after the final bit is clocked.
-        ------------------------------------------------
-        DATAPROC : process(MCLK)
-        begin
-            if rising_edge(MCLK) then
-                if ENABLE = '1' then
-                    -- On the falling edge of BCLK when the bitCntr is maxed, swap data
-                    if bitCntr = 0 and fsClk = '0' and bitTransition = '1' then
-                        readySig <= '1';
-                    else
-                        readySig <= '0';
-                    end if;
-                end if;
-            end if;
-        end process;
         
         ------------------------------------------------
         -- These processes will drive the bit counting
         -- mechanism, which will drive the serial 
         -- data clocking mechanism.
         ------------------------------------------------
-        BITFALLDETECT: edgeDetect(MCLK, ENABLE, bitClk, bitClkLast, bitTransition, FALLING);
         BITCOUNT_PROCESS: process(MCLK)
         begin
             if rising_edge(MCLK) then
                 if ENABLE = '1' then
-                    if bitTransition = '1' and bitCntr /= 0 then
+
+                    bitClkLast <= bitClk;
+
+                    if bitClkCntr = bitClkCntMax and bitClk = '1' and bitCntr /= 0 then
                         bitCntr <= bitCntr - 1;
-                    elsif bitTransition = '1' and bitCntr = 0 then
+                    elsif bitClkCntr = bitClkCntMax and bitClk = '1' and bitCntr = 0 then
                         bitCntr <= bitCntMax;
                     end if;
+                else
+                    -- This reset handles the justification. Setting bitCntr to bitCntMax
+                    -- shifts us to the left one bit into Right Justification.
+                    bitCntr    <= 0;
+                    bitClkLast <= '0';
                 end if;
             end if;
         end process;

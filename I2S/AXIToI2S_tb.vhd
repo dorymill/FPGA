@@ -19,7 +19,9 @@ architecture SIM of TestBench is
             ENABLE : in std_logic;
             MCLK   : in std_logic;
             DIN1   : in std_logic_vector(bitWidth - 1 downto 0);
+            DIN2   : in std_logic_vector(bitWidth - 1 downto 0);
             PHONE1 : out std_logic;
+            PHONE2 : out std_logic;
             LRCLK  : out std_logic;
             BCLK   : out std_logic;
             READY  : out std_logic
@@ -35,7 +37,9 @@ architecture SIM of TestBench is
     signal lrclkTb  : std_logic := '0';
     signal bclkTb   : std_logic := '0';
     signal din1Tb   : std_logic_vector(bitWidth - 1 downto 0) := (others => '0');
+    signal din2Tb   : std_logic_vector(bitWidth - 1 downto 0) := (others => '0');
     signal phone1Tb : std_logic;
+    signal phone2Tb : std_logic;
     signal readyTb  : std_logic;
     signal DONE     : boolean := FALSE;
 
@@ -54,13 +58,16 @@ begin
             ENABLE => enableTb,
             MCLK   => mclkTb,
             DIN1   => din1Tb,
+            DIN2   => din2Tb,
             PHONE1 => phone1Tb,
+            PHONE2 => phone2Tb,
             LRCLK  => lrclkTb,
             BCLK   => bclkTb,
             READY  => readyTb
         );
 
     din1Tb <= std_logic_vector(dataWord);
+    din2Tb <= std_logic_vector(dataWord);   
 
     ------------------------------------------------
     -- Master clock

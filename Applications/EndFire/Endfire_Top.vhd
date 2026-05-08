@@ -23,8 +23,8 @@ entity EndfireTop is
         fsClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
         bitWidth  : integer := 16;        -- Audio Data Size
         nChan     : integer := 2;         -- Number of Channels
-        nSeg    : integer := 7;           -- Number of Segements
-        nAnode  : integer := 4            -- Number of Displays
+        nSeg      : integer := 7;           -- Number of Segements
+        nAnode    : integer := 4            -- Number of Displays
     
     );
 
@@ -37,6 +37,7 @@ entity EndfireTop is
         PHONE1   : out std_logic; -- Phone 1 bit output
         PHONE2   : out std_logic; -- Phone 2 bit output
         
+        I2SMCLK  : out std_logic; -- I2S Master Clock
         LRCLK    : out std_logic; -- Frame Sync Clock
         BCLK     : out std_logic; -- Bit Sync Clock
 
@@ -59,30 +60,30 @@ architecture RTL of EndfireTop is
     constant romDepth   : integer := 2**addrWidth;
     constant updateRate : integer := 96000;
 
-    signal i2sClk      : std_logic := '0';
-    signal ready       : std_logic := '0';
+    signal i2sClk      : std_logic;
+    signal ready       : std_logic;
 
     -- I2S Input Data Registers
     signal d1InReg : std_logic_vector(bitWidth - 1 downto 0);
     signal d2InReg : std_logic_vector(bitWidth - 1 downto 0);
 
-    -- COS ROM Address Registers
-    signal addr1  : std_logic_vector(addrWidth - 1 downto 0) := (others => '0');
-    signal addr2  : std_logic_vector(addrWidth - 1 downto 0) := (others => '0');
+    -- COS ROM Address Registers  
+    signal addr1  : std_logic_vector(addrWidth - 1 downto 0);
+    signal addr2  : std_logic_vector(addrWidth - 1 downto 0);
 
     -- LED Drive signal
-    signal ledOut : std_logic_vector(bitWidth - 1 downto 0) := (others => '0');
+    signal ledOut : std_logic_vector(bitWidth - 1 downto 0);
 
     -- Frequency Generation Parameters
-    constant toneFreq   : integer := 400;
+    constant toneFreq   : integer := 800;
     constant sampleRate : integer := fsClkFreq;  -- 96 kHz
     constant phaseIncr : unsigned(addrWidth - 1 downto 0) :=
         to_unsigned(((toneFreq * (2**addrWidth)) + sampleRate/2) / sampleRate, addrWidth);
 
     constant endFireOffSet : unsigned(addrWidth - 1 downto 0) := to_unsigned(romDepth / 2, addrWidth);
 
-    signal addr1Accumulator : unsigned(addrWidth - 1 downto 0) := (others => '0');
-    signal addr2Accumulator : unsigned(addrWidth - 1 downto 0) := endFireOffSet;   -- This starts us off always 180 degrees out
+    signal addr1Accumulator : unsigned(addrWidth - 1 downto 0);
+    signal addr2Accumulator : unsigned(addrWidth - 1 downto 0);   -- This starts us off always 180 degrees out
 
     ------------------------------------------------
     -- Component Declarations
@@ -178,9 +179,9 @@ architecture RTL of EndfireTop is
         -- Concurrent Statements
         ------------------------------------------------
         ready <= READY;
+        I2SMCLK <= i2sClk;
         addr1 <= std_logic_vector(addr1Accumulator);
         addr2 <= std_logic_vector(addr2Accumulator) when MODE = '1' else std_logic_vector(addr1Accumulator);
-        LED <= ledOut;
 
         ------------------------------------------------
         -- Component Instantiation
@@ -268,9 +269,14 @@ architecture RTL of EndfireTop is
         ------------------------------------------------
         begin
             if rising_edge(i2sClk) then
-                if ready = '1' then
-                    addr1Accumulator <= addr1Accumulator + phaseIncr;
-                    addr2Accumulator <= addr2Accumulator + phaseIncr;
+                if ENABLE = '1' then
+                    if ready = '1' then
+                        addr1Accumulator <= addr1Accumulator + phaseIncr;
+                        addr2Accumulator <= addr2Accumulator + phaseIncr;
+                    end if;
+                else 
+                    addr1Accumulator <= (others => '0');
+                    addr2Accumulator <= endFireOffset;
                 end if;
             end if;
         end process WAVE_PROCESS;
@@ -284,11 +290,15 @@ architecture RTL of EndfireTop is
             variable ledCounter : natural := 0;
         begin
             if rising_edge(i2sclk) then
-                if ledCounter = 10*updateRate then
-                    LED <= d1InReg;
+                if ENABLE = '1' then
+                    if ledCounter = 10*updateRate then
+                        LED <= d1InReg;
+                        ledCounter := 0;
+                    else 
+                        ledCounter := ledCounter + 1;
+                    end if;
+                else
                     ledCounter := 0;
-                else 
-                    ledCounter := ledCounter + 1;
                 end if;
             end if;
         end process;

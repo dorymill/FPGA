@@ -14,9 +14,12 @@ quietly WaveActivateNextPane {} 0
 add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/I2S_inst/d1InReg
 add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/I2S_inst/d2InReg
 add wave -noupdate /testbench/MODE_tb
+add wave -noupdate /testbench/ENABLE_tb
+add wave -noupdate /testbench/i2sClk
 add wave -noupdate /testbench/I2S_inst/LRCLK
 add wave -noupdate /testbench/I2S_inst/BCLK
 add wave -noupdate /testbench/I2S_inst/READY
+add wave -noupdate /testbench/I2S_inst/bitCntr
 add wave -noupdate /testbench/I2S_inst/PHONE1
 add wave -noupdate /testbench/I2S_inst/PHONE2
 add wave -noupdate /testbench/COS_ROM_inst/ADDR2

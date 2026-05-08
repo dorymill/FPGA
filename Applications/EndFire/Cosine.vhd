@@ -32,6 +32,7 @@ entity COS_ROM is
 
         ADDR1 : in std_logic_vector(addrWidth - 1 downto 0); -- Address 1 in ROM
         ADDR2 : in std_logic_vector(addrWidth - 1 downto 0); -- Address 2 in ROM
+        
         DATA1 : out std_logic_vector(romWidth - 1 downto 0); -- Data out bus
         DATA2 : out std_logic_vector(romWidth - 1 downto 0)  -- Data out bus
     

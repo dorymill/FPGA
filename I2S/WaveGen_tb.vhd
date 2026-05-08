@@ -43,7 +43,9 @@ architecture SIM of TestBench is
             ENABLE : in std_logic;
             MCLK   : in std_logic;
             DIN1   : in std_logic_vector(bitWidth - 1 downto 0);
+            DIN2   : in std_logic_vector(bitWidth - 1 downto 0);
             PHONE1 : out std_logic;
+            PHONE2 : out std_logic;
             LRCLK  : out std_logic;
             BCLK   : out std_logic;
             READY  : out std_logic
@@ -70,7 +72,9 @@ architecture SIM of TestBench is
     signal addr_tb     : std_logic_vector(simAddrWidth - 1 downto 0) := (others => '0');
     signal cosVal_tb   : std_logic_vector(simWidth - 1 downto 0);
     signal din1_tb     : std_logic_vector(simWidth - 1 downto 0) := (others => '0');
+    signal din2_tb     : std_logic_vector(simWidth - 1 downto 0) := (others => '0');
     signal phone1_tb   : std_logic;
+    signal phone2_tb   : std_logic;
     signal lrclk_tb    : std_logic;
     signal bclk_tb     : std_logic;
     signal ready_tb    : std_logic;
@@ -109,6 +113,7 @@ begin
             ENABLE => enable_tb,
             MCLK   => clk_tb,
             DIN1   => din1_tb,
+            DIN2   => din2_tb,
             PHONE1 => phone1_tb,
             LRCLK  => lrclk_tb,
             BCLK   => bclk_tb,
@@ -143,6 +148,7 @@ begin
                 addr_tb <= std_logic_vector(addr_accum);
                 -- Feed cosine value to I2S input
                 din1_tb <= cosVal_tb;
+                din2_tb <= cosVal_tb;
                 sample_count := sample_count + 1;
                 if sample_count = 48000 then  -- ~500 ms at 96 kHz
                     DONE <= TRUE;

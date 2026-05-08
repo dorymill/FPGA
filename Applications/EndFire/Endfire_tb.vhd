@@ -188,15 +188,25 @@ begin
         -- Reset
         ENABLE_tb <= '0';
         MODE_tb <= '0';
-        wait for 100 ns;
+        wait for 1000 ns;
         
         -- Enable and test normal mode
         ENABLE_tb <= '1';
         wait for 20 ms;
+
+        -- Disable and test reset
+        ENABLE_tb <= '0';
+        wait for 1 ms;
+        ENABLE_tb <= '1';
         
         -- Switch to Endfire mode
         MODE_tb <= '1';
         wait for 20 ms;
+
+        -- Disable and test reset
+        ENABLE_tb <= '0';
+        wait for 1 ms;
+        ENABLE_tb <= '1';
 
         -- Switch back out
         MODE_tb <= '0';
