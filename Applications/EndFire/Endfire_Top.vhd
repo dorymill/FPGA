@@ -62,10 +62,15 @@ architecture RTL of EndfireTop is
 
     signal i2sClk      : std_logic;
     signal ready       : std_logic;
+    signal readyLast   : std_logic;
 
     -- I2S Input Data Registers
     signal d1InReg : std_logic_vector(bitWidth - 1 downto 0);
     signal d2InReg : std_logic_vector(bitWidth - 1 downto 0);
+    signal d1Out   : std_logic_vector(bitWidth - 1 downto 0);
+    signal d2Out   : std_logic_vector(bitWidth - 1 downto 0);
+    signal d1MultReg : std_logic_vector(2*bitWidth -1 downto 0);
+    signal d2MultReg : std_logic_vector(2*bitWidth -1 downto 0);
 
     -- COS ROM Address Registers  
     signal addr1  : std_logic_vector(addrWidth - 1 downto 0);
@@ -208,8 +213,8 @@ architecture RTL of EndfireTop is
                 ENABLE   => ENABLE,
                 MCLK     => i2sclk,
 
-                DIN1  => d1InReg,
-                DIN2  => d2InReg,
+                DIN1  => d1Out,
+                DIN2  => d2Out,
 
                 PHONE1   => PHONE1,
                 PHONE2   => PHONE2,
@@ -280,6 +285,39 @@ architecture RTL of EndfireTop is
                 end if;
             end if;
         end process WAVE_PROCESS;
+
+        -- Process to rescale the cosine samples by
+        -- a decimal scalar value.
+        ------------------------------------------------
+        OUTPUT_SCALE_PROCESS : process(i2sclk)
+        ------------------------------------------------
+
+        variable scalar : integer := 4096; -- 1.25% Scalar
+
+        begin
+            if rising_edge(i2sclk) then
+
+                -- Keep track of ready transitions
+                readyLast <= ready;
+
+                -- The falling edge of ready, we have new data
+                if readyLast = '1' and ready = '0' then
+
+                    -- Performa 1.15 Multiplication, requiring an N+1 bit register
+                    -- to hold the value.
+                    d1MultReg <= std_logic_vector(signed(d1InReg) * scalar);
+                    d2MultReg <= std_logic_vector(signed(d2InReg) * scalar);
+
+                    -- Slice the output to execute the appropriate bitshift >:D
+                    d1Out <= std_logic_vector(d1MultReg(bitWidth*2 - 1 downto bitWidth));
+                    d2Out <= std_logic_vector(d2MultReg(bitWidth*2 - 1 downto bitWidth));
+
+                end if;
+
+
+            end if;
+        end process OUTPUT_SCALE_PROCESS;
+
 
 
         -- This process shall drive the LED's based

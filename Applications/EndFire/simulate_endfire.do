@@ -11,8 +11,8 @@ vsim work.TestBench
 # Set the waves
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/I2S_inst/d1InReg
-add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/I2S_inst/d2InReg
+add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/d1Out
+add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/d2Out
 add wave -noupdate /testbench/MODE_tb
 add wave -noupdate /testbench/ENABLE_tb
 add wave -noupdate /testbench/i2sClk

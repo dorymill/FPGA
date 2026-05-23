@@ -133,7 +133,7 @@ architecture RTL of AXIToI2S is
                     end if;
 
                     -- Request new data on the falling edge when we reset
-                    if (bitCntr = 0 and bitClk = '0' and fsClk = '0' and bitClkLast = '1') then
+                    if (bitCntr = 15 and bitClk = '0' and fsClk = '0' and bitClkLast = '1') then
                         readySig <= '1';
                     else 
                         readySig <= '0';
