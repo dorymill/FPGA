@@ -54,7 +54,7 @@ architecture RTL of AXIToI2S is
 ------------------------------------------------
 
     -- Constants
-    constant fsClkCntMax  : integer := (mClkFreq / fsClkFreq) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
+    constant fsClkCntMax  : integer := (mClkFreq / (2*fsClkFreq)) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
     constant bitClkCntMax : integer := (mclkFreq / (fsClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
     constant bitCntMax    : integer := bitWidth - 1;                                -- Data width
     

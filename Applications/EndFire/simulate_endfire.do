@@ -13,6 +13,7 @@ onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/d1Out
 add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/d2Out
+add wave -noupdate -format Analog-Step -height 74 -max 32767.0 -min -32767.0 /testbench/volume
 add wave -noupdate /testbench/MODE_tb
 add wave -noupdate /testbench/ENABLE_tb
 add wave -noupdate /testbench/i2sClk
@@ -24,6 +25,10 @@ add wave -noupdate /testbench/I2S_inst/PHONE1
 add wave -noupdate /testbench/I2S_inst/PHONE2
 add wave -noupdate /testbench/COS_ROM_inst/ADDR2
 add wave -noupdate /testbench/COS_ROM_inst/ADDR1
+add wave -noupdate /testbench/COS_ROM_inst/DATA1
+add wave -noupdate /testbench/COS_ROM_inst/DATA2
+add wave -noupdate /testbench/phaseIncr
+add wave -noupdate /testbench/COS_ROM_inst/cos_table
 
 
 # Run the simulation

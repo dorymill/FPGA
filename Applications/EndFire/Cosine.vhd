@@ -78,7 +78,7 @@ architecture RTL of COS_ROM is
             for idx in 0 to 2**addrWidth - 1 loop
 
                 angle := 2.0*MATH_PI*real(idx) / (real(2**(addrWidth)));
-                cVal  := sin(angle);
+                cVal  := cos(angle);
 
                 -- Scale the sucker.
                 data(idx) := std_logic_vector(to_signed(integer(cVal*real((2**(romWidth-1) - 1))), romWidth));

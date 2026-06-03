@@ -79,26 +79,28 @@ architecture TB of TestBench is
     signal LRCLK_tb  : std_logic;
     signal BCLK_tb   : std_logic;
     signal LED_tb    : std_logic_vector(15 downto 0);
+    signal SW_tb     : std_logic_vector(12 downto 0);
 
     -- Internal Signals (from Endfire_Top)
     signal i2sClk      : std_logic := '0';
     signal ready       : std_logic := '0';
     signal readyLast   : std_logic := '0';
 
-    signal d1Out   : std_logic_vector(bitWidth - 1 downto 0);
-    signal d2Out   : std_logic_vector(bitWidth - 1 downto 0);
+    signal d1Out       : std_logic_vector(bitWidth - 1 downto 0);
+    signal d2Out       : std_logic_vector(bitWidth - 1 downto 0);
     signal d1InReg     : std_logic_vector(bitWidth - 1 downto 0);
     signal d2InReg     : std_logic_vector(bitWidth - 1 downto 0);
-    signal d1MultReg : std_logic_vector(2*bitWidth -1 downto 0);
-    signal d2MultReg : std_logic_vector(2*bitWidth -1 downto 0);
+    signal d1MultReg   : std_logic_vector(2*bitWidth -1 downto 0);
+    signal d2MultReg   : std_logic_vector(2*bitWidth -1 downto 0);
     signal addr1       : std_logic_vector(addrWidth - 1 downto 0) := (others => '0');
     signal addr2       : std_logic_vector(addrWidth - 1 downto 0) := (others => '0');
+    signal volume      : integer;
 
     -- Frequency Generation
     constant toneFreq   : integer := 800;
     constant sampleRate : integer := fsClkFreq;
     constant phaseIncr  : unsigned(addrWidth - 1 downto 0) :=
-        to_unsigned(((toneFreq * (2**addrWidth)) + sampleRate/2) / sampleRate, addrWidth);
+        to_unsigned((((toneFreq * 2**addrWidth) + sampleRate/2)) / sampleRate, addrWidth);
     constant endFireOffSet : unsigned(addrWidth - 1 downto 0) := to_unsigned(romDepth / 2, addrWidth);
     signal addr1Accumulator : unsigned(addrWidth - 1 downto 0) := (others => '0');
     signal addr2Accumulator : unsigned(addrWidth - 1 downto 0) := endFireOffSet;
@@ -180,8 +182,6 @@ begin
     OUTPUT_SCALE_PROCESS : process(i2sclk)
     ------------------------------------------------
 
-    variable scalar : integer := 16384; -- 50% Scalar
-
     begin
         if rising_edge(i2sclk) then
 
@@ -193,8 +193,8 @@ begin
 
                 -- Performa 1.15 Multiplication, requiring an N+1 bit register
                 -- to hold the value.
-                d1MultReg <= std_logic_vector(signed(d1InReg) * scalar);
-                d2MultReg <= std_logic_vector(signed(d2InReg) * scalar);
+                d1MultReg <= std_logic_vector(signed(d1InReg) * volume);
+                d2MultReg <= std_logic_vector(signed(d2InReg) * volume);
 
                 -- Slice the output to execute the appropriate bitshift >:D
                 d1Out <= std_logic_vector(d1MultReg(bitWidth*2 - 1 downto bitWidth));
@@ -220,6 +220,25 @@ begin
         end if;
     end process LED_STATUS_PROCESS;
 
+        -- This process shall drive the volume of the 
+        -- audio signal using the available switches.
+        ------------------------------------------------
+        SWITCH_PROCESS : process(i2sclk)
+        ------------------------------------------------
+        begin
+             if rising_edge(i2sclk) then
+                if ENABLE_tb = '1' then
+            
+                    volume <= 3*to_integer(unsigned(SW_tb));
+
+                else
+                    volume <= 0;
+                    
+                end if;
+
+             end if;
+        end process SWITCH_PROCESS;
+
     -- Stimulus Process
     STIMULUS : process
     begin
@@ -229,6 +248,7 @@ begin
         wait for 1000 ns;
         
         -- Enable and test normal mode
+        SW_tb <= "1111111111111";
         ENABLE_tb <= '1';
         wait for 20 ms;
 
@@ -238,12 +258,14 @@ begin
         ENABLE_tb <= '1';
         
         -- Switch to Endfire mode
+        SW_tb <= "0111111111111";
         MODE_tb <= '1';
         wait for 20 ms;
 
         -- Disable and test reset
         ENABLE_tb <= '0';
         wait for 1 ms;
+        SW_tb <= "1111111111111";
         ENABLE_tb <= '1';
 
         -- Switch back out
