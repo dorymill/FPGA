@@ -134,7 +134,7 @@ architecture RTL of AXIToI2S is
                     else
                     -- Otherwise increment the bClk counter
                     bitClkCntr <= bitClkCntr + 1;
-                    readySig <= 0;
+                    readySig <= '0';
                     end if;
 
                 else

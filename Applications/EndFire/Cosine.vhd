@@ -93,29 +93,21 @@ architecture RTL of COS_ROM is
     -- Initialize the ROM at compile time using the function!
     constant cos_table : rom_type := init_rom;
 
+    
     begin
-
+        
         ------------------------------------------------
         -- Concurrent Statements
         ------------------------------------------------
         DATA1 <= data1Out;
         DATA2 <= data2Out;
-
-        ------------------------------------------------
-        -- Processes
-        ------------------------------------------------
-
+        
         -- Here we simply place the currently addressed value on
-        -- the data bus.
-        READ_PROCESS : process(CLK)
-        begin
-            if rising_edge(CLK) then
+        -- the data bus. Doin this as concurrent statements, and 
+        -- not in a process results in immediate updates to the outputs,
+        -- as desired.
+        data1Out <= std_logic_vector(cos_table(to_integer(unsigned(ADDR1))));
+        data2Out <= std_logic_vector(cos_table(to_integer(unsigned(ADDR2))));
 
-                data1Out <= std_logic_vector(cos_table(to_integer(unsigned(ADDR1))));
-                data2Out <= std_logic_vector(cos_table(to_integer(unsigned(ADDR2))));
-
-            end if;
-
-        end process;
 
 end architecture RTL;

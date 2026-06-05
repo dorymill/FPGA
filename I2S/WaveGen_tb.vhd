@@ -27,8 +27,10 @@ architecture SIM of TestBench is
         );
         port (
             CLK  : in std_logic;
-            ADDR : in std_logic_vector(addrWidth - 1 downto 0);
-            DATA : out std_logic_vector(romWidth - 1 downto 0)
+            ADDR1 : in std_logic_vector(addrWidth - 1 downto 0);
+            ADDR2 : in std_logic_vector(addrWidth - 1 downto 0);
+            DATA1 : out std_logic_vector(romWidth - 1 downto 0);
+            DATA2 : out std_logic_vector(romWidth - 1 downto 0)
         );
     end component;
 
@@ -95,8 +97,10 @@ begin
         )
         port map (
             CLK  => clk_tb,
-            ADDR => addr_tb,
-            DATA => cosVal_tb
+            ADDR1 => addr_tb,
+            ADDR2 => (others => '0'),
+            DATA1 => cosVal_tb,
+            DATA2 => open
         );
 
     ------------------------------------------------

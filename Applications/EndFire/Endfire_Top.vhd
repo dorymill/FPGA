@@ -20,8 +20,8 @@ entity EndfireTop is
     generic ( -- Constants
     
         mClkFreq  : integer := 49152000;  -- Master Clock Frequency
-        fsClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
-        bitWidth  : integer := 16;        -- Audio Data Size
+        fsClkFreq : integer := 192000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
+        bitWidth  : integer := 32;        -- Audio Data Size
         nChan     : integer := 2;         -- Number of Channels
         nSeg      : integer := 7;         -- Number of Segements
         nAnode    : integer := 4          -- Number of Displays
