@@ -71,7 +71,7 @@ architecture RTL of AXIToI2S is
 
     -- Outputs
     signal fsClk         : std_logic := '0'; -- Frame Sync Clock output
-    signal bitClk        : std_logic := '0'; -- Bit Sync Clock output
+    signal bitClk        : std_logic := '0'; -- Bit  Sync Clock output
     
     -- Maintenance
     signal readySig   : std_logic := '0'; -- Data Ready Signal
