@@ -62,6 +62,7 @@ architecture RTL of EndfireTop is
     constant updateRate : integer := 96000;
 
     signal i2sClk      : std_logic;
+    signal interClk    : std_logic;
     signal ready       : std_logic;
     signal readyLast   : std_logic;
 
@@ -98,6 +99,13 @@ architecture RTL of EndfireTop is
 
     -- PLL to provide proper clock
     component clk_wiz_0
+        port (
+            CLK_IN1    : in  std_logic;
+            CLK_OUT1   : out std_logic
+        );
+    end component;
+
+    component clk_wiz_1
         port (
             CLK_IN1    : in  std_logic;
             CLK_OUT1   : out std_logic
@@ -195,10 +203,16 @@ architecture RTL of EndfireTop is
         ------------------------------------------------
 
         -- Instantiate the PLL
-        PLL_inst : clk_wiz_0
+        PLL1_inst : clk_wiz_0
             port map (
                 CLK_IN1  => MCLK,
-                CLK_OUT1 => i2sclk
+                CLK_OUT1 => interClk
+            );
+
+        PLL2_inst : clk_wiz_1
+            port map (
+                CLK_IN1  => interClk,
+                CLK_OUT1 => i2sClk
             );
 
         -- Instantiate the AXIS I2S Bridge
