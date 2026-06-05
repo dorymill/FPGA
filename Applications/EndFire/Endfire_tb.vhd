@@ -67,8 +67,8 @@ architecture TB of TestBench is
     constant bitWidth   : integer := 16;
     constant nChan      : integer := 2;
     constant updateRate : integer := 96000;
-    constant mClkFreq   : integer := 24576000;
-    constant fsClkFreq  : integer := 96000;
+    constant mClkFreq   : integer := 49152000;
+    constant fsClkFreq  : integer := 192000;
 
     -- Test Signals
     signal MCLK_tb   : std_logic := '0';
@@ -106,7 +106,7 @@ architecture TB of TestBench is
     signal addr2Accumulator : unsigned(addrWidth - 1 downto 0) := endFireOffSet;
 
     -- Clock Period
-    constant CLK_PERIOD : time := 40.69 ns;  -- For 24.576 MHz MCLK
+    constant CLK_PERIOD : time := 1 sec / mClkFreq;  -- For  MHz MCLK
     signal DONE : boolean := FALSE;
 
 begin
@@ -212,7 +212,7 @@ begin
     begin
         if rising_edge(i2sClk) then
             if ledCounter = 10*updateRate then
-                LED_tb <= d1InReg;
+                LED_tb <= d1InReg(bitWidth -1 downto bitWidth - 16);
                 ledCounter := 0;
             else
                 ledCounter := ledCounter + 1;

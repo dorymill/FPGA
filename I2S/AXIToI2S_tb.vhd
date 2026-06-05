@@ -32,7 +32,7 @@ architecture SIM of TestBench is
     constant mClkFreq   : real    := 30.72e6;
     constant TCLK       : time    := 1 sec / mClkFreq;
 
-    signal enableTb : std_logic := '1';
+    signal enableTb : std_logic := '0';
     signal mclkTb   : std_logic := '0';
     signal lrclkTb  : std_logic := '0';
     signal bclkTb   : std_logic := '0';
@@ -83,6 +83,16 @@ begin
         wait;
     end process clk_proc;
 
+
+    ------------------------------------------------
+    -- Increment DIN1 on each READY pulse
+    ------------------------------------------------
+    enable_proc : process
+    begin
+        wait for 1000 ns;
+        enableTb <= '1';
+        wait;
+    end process enable_proc;
 
     ------------------------------------------------
     -- Increment DIN1 on each READY pulse

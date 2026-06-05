@@ -11,15 +11,15 @@ vsim work.TestBench
 # Set the waves
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate /testbench/UUT/MCLK
-add wave -noupdate /testbench/UUT/BCLK
-add wave -noupdate /testbench/UUT/LRCLK
-add wave -radix unsigned -noupdate /testbench/UUT/d1InReg
-add wave -noupdate /testbench/UUT/bitCntr
-add wave -radix unsigned -noupdate /testbench/UUT/DIN1
+add wave -noupdate /testbench/UUT/ENABLE
 add wave -noupdate /testbench/UUT/PHONE1
+add wave -noupdate /testbench/UUT/MCLK
+add wave -noupdate /testbench/UUT/LRCLK
+add wave -noupdate /testbench/UUT/BCLK
+add wave -noupdate /testbench/UUT/bitCntr
 add wave -noupdate /testbench/UUT/READY
-add wave -noupdate /testbench/UUT/bitTransition
+add wave -radix unsigned -noupdate /testbench/UUT/d1InReg
+add wave -radix unsigned -noupdate /testbench/UUT/DIN1
 
 
 

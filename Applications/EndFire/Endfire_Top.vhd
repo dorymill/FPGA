@@ -23,8 +23,8 @@ entity EndfireTop is
         fsClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
         bitWidth  : integer := 16;        -- Audio Data Size
         nChan     : integer := 2;         -- Number of Channels
-        nSeg      : integer := 7;           -- Number of Segements
-        nAnode    : integer := 4            -- Number of Displays
+        nSeg      : integer := 7;         -- Number of Segements
+        nAnode    : integer := 4          -- Number of Displays
     
     );
 
@@ -349,7 +349,7 @@ architecture RTL of EndfireTop is
             if rising_edge(i2sclk) then
                 if ENABLE = '1' then
                     if ledCounter = 10*updateRate then
-                        LED <= d1InReg;
+                        LED <= d1InReg((bitWdith - 1) downto bitWidth - 16); -- This keeps only the top 16 bits for the LED[15:0]
                         ledCounter := 0;
                     else 
                         ledCounter := ledCounter + 1;

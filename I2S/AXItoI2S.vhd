@@ -21,9 +21,9 @@ entity AXIToI2S is
 
     generic ( -- Constants 
 
-        mClkFreq  : integer := 24576000;  -- Master Clock Frequency
-        fsClkFreq : integer := 96000;     -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
-        bitWidth  : integer := 16;        -- Audio Data Size
+        mClkFreq  : integer := 49152000;  -- Master Clock Frequency
+        fsClkFreq : integer := 192000;    -- Frame Sync Clock Frequency (f_s = 96 kHz Audio)
+        bitWidth  : integer := 32;        -- Audio Data Size
         nChan     : integer := 2          -- Number of Channels
 
     );
@@ -54,34 +54,28 @@ architecture RTL of AXIToI2S is
 ------------------------------------------------
 
     -- Constants
-    constant fsClkCntMax  : integer := (mClkFreq / (2*fsClkFreq)) - 1;                  -- Clock cycles per frame sync cycle (mClk/f_s)
-    constant bitClkCntMax : integer := (mclkFreq / (fsClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
-    constant bitCntMax    : integer := bitWidth - 1;                                -- Data width
+    constant fsClkCntMax  : integer := (mClkFreq / (2*fsClkFreq)) - 1;                -- Clock cycles per frame sync cycle (mClk/2*f_s)
+    constant bitClkCntMax : integer := (mclkFreq / (2*fsClkFreq*nChan*bitWidth)) - 1; -- Frame Sync cycles per N Channels of words (f_s*channels*data width)
+    constant bitCntMax    : integer := bitWidth - 1;                                  -- Data width
     
-    type EDGE_TYPE is (RISING, FALLING);
-
     -- Signals
     -- Counters
     signal bitCntr    : integer := bitCntMax; -- Clocked bits counter
-    signal fsClkCntr  : integer;              -- Frame Sync Clock Cycle Counter
-    signal bitClkCntr : integer;              -- Bit Sync CLock Cycle Counter
+    signal fsClkCntr  : integer := 0;         -- Frame Sync Clock Cycle Counter
+    signal bitClkCntr : integer := 0;         -- Bit Sync CLock Cycle Counter
 
     -- Inputs
     signal en      : std_logic; -- Enable
     signal d1InReg : std_logic_vector(bitWidth - 1 downto 0) := (others => '0'); -- Phone 1 Serial Output
     signal d2InReg : std_logic_vector(bitWidth - 1 downto 0) := (others => '0'); -- Phone 2 Serial Output
 
-    signal bitTransition : std_logic; -- Bit Clock Shift Signal
-    
     -- Outputs
-    signal fsClk         : std_logic; -- Frame Sync Clock output
-    signal bitClk        : std_logic; -- Bit Sync Clock output
+    signal fsClk         : std_logic := '0'; -- Frame Sync Clock output
+    signal bitClk        : std_logic := '0'; -- Bit Sync Clock output
     
     -- Maintenance
-    signal readySig   : std_logic; -- Data Ready Signal
-    signal bitClkLast : std_logic; -- BCLK edge detection signal
+    signal readySig   : std_logic := '0'; -- Data Ready Signal
     
-
     begin -- Concurrent Statements & Component Instantiation
 
         -- Clocks
@@ -92,7 +86,7 @@ architecture RTL of AXIToI2S is
         READY    <= readySig;  -- Connect Data Ready
 
         -- Data Inputs
-        en      <= ENABLE;        -- Connect Enable
+        en      <= ENABLE;     -- Connect Enable
 
         -- Data Outputs
         PHONE1 <= d1InReg(bitCntr);
@@ -128,15 +122,18 @@ architecture RTL of AXIToI2S is
                     if (bitClkCntr = bitClkCntMax) then
                         bitClk <= not bitClk;
                         bitClkCntr <= 0;
-                    else
-                        bitClkCntr <= bitClkCntr + 1;
-                    end if;
 
-                    -- Request new data on the falling edge when we reset
-                    if (bitCntr = 15 and bitClk = '0' and fsClk = '0' and bitClkLast = '1') then
+                    -- Request new data on the falling of this clock and after
+                    -- a full fsClk cycle
+                    if (bitCntr = 0 and bitClk = '1' and fsClk = '0') then
                         readySig <= '1';
                     else 
                         readySig <= '0';
+                    end if;
+
+                    else
+                    -- Otherwise increment the bClk counter
+                    bitClkCntr <= bitClkCntr + 1;
                     end if;
 
                 else
@@ -174,19 +171,20 @@ architecture RTL of AXIToI2S is
         begin
             if rising_edge(MCLK) then
                 if ENABLE = '1' then
-
-                    bitClkLast <= bitClk;
-
-                    if bitClkCntr = bitClkCntMax and bitClk = '1' and bitCntr /= 0 then
-                        bitCntr <= bitCntr - 1;
-                    elsif bitClkCntr = bitClkCntMax and bitClk = '1' and bitCntr = 0 then
-                        bitCntr <= bitCntMax;
+                    -- On the falling edges of the bitClk, when it's about to go low...
+                    if bitClkCntr = bitClkCntMax and bitClk = '1' then
+                        -- Normal bit counting operation
+                        if bitCntr /= 0 then
+                            bitCntr <= bitCntr - 1;
+                        -- Take it back from the top!
+                        else
+                            bitCntr <= bitCntMax;
+                        end if;
                     end if;
                 else
                     -- This reset handles the justification. Setting bitCntr to bitCntMax
                     -- shifts us to the left one bit into Right Justification.
-                    bitCntr    <= 0;
-                    bitClkLast <= '0';
+                    bitCntr <= 0;
                 end if;
             end if;
         end process;
