@@ -125,7 +125,7 @@ architecture RTL of AXIToI2S is
 
                     -- Request new data on the falling of this clock and after
                     -- a full fsClk cycle
-                    if (bitCntr = 0 and bitClk = '1' and fsClk = '0') then
+                    if (bitCntr = 0 and bitClk = '1' and fsClk = '1') then
                         readySig <= '1';
                     else 
                         readySig <= '0';
@@ -134,6 +134,7 @@ architecture RTL of AXIToI2S is
                     else
                     -- Otherwise increment the bClk counter
                     bitClkCntr <= bitClkCntr + 1;
+                    readySig <= 0;
                     end if;
 
                 else
